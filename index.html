@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NDI問題集アプリ</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* リスト共通 */
+        .item-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .list-item:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .item-stats {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .item-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-bar {
+            width: 100px;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #667eea;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* カテゴリアイコン */
+        .category-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9rem;
+            margin-right: 12px;
+        }
+
+        .category-icon.mt { background: #e74c3c; }
+        .category-icon.pt { background: #3498db; }
+        .category-icon.ut { background: #2ecc71; }
+        .category-icon.rt { background: #f39c12; }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+        }
+
+        /* ナビゲーション */
+        .nav-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-right: 16px;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .nav-title {
+            font-size: 1.2rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        /* オプション */
+        .options-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .option-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .toggle-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 12px;
+        }
+
+        .reset-btn:hover {
+            background: #c82333;
+        }
+
+        /* 問題画面 */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .quiz-progress {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .question-area {
+            margin-bottom: 24px;
+        }
+
+        .question-number {
+            font-size: 0.9rem;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* 選択肢 */
+        .choices {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .choice-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .choice-btn:hover:not(:disabled) {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .choice-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        .choice-label {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .choice-text {
+            flex: 1;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .choice-btn.correct {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .choice-btn.correct .choice-label {
+            background: #28a745;
+        }
+
+        .choice-btn.wrong {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .choice-btn.wrong .choice-label {
+            background: #dc3545;
+        }
+
+        .choice-btn.unknown {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .choice-btn.unknown .choice-label {
+            background: #ffc107;
+            color: #333;
+        }
+
+        /* 結果表示 */
+        .result-display {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .result-display.correct {
+            background: #d4edda;
+        }
+
+        .result-display.wrong {
+            background: #f8d7da;
+        }
+
+        .result-icon {
+            font-size: 3rem;
+            margin-bottom: 8px;
+        }
+
+        .result-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .result-display.correct .result-text {
+            color: #28a745;
+        }
+
+        .result-display.wrong .result-text {
+            color: #dc3545;
+        }
+
+        /* 解説 */
+        .explanation {
+            display: none;
+            background: #e7f1ff;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .explanation-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .explanation-text {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .next-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+        }
+
+        .next-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* 完了画面 */
+        .complete-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .complete-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        .complete-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .complete-stats {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .home-btn {
+            padding: 14px 32px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            h1 {
+                font-size: 1.3rem;
+            }
+
+            .list-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .item-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .progress-bar {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <!-- ホーム画面（年度選択） -->
+            <div id="home-screen" class="screen active">
+                <h1>NDI問題集</h1>
+                <div class="item-list" id="year-list"></div>
+
+                <div class="options-section">
+                    <div class="option-row">
+                        <span class="option-label">出題順序:</span>
+                        <button class="toggle-btn active" id="order-sequential">順番通り</button>
+                        <button class="toggle-btn" id="order-random">ランダム</button>
+                    </div>
+                    <button class="reset-btn" onclick="resetAllProgress()">全ての進捗をリセット</button>
+                </div>
+            </div>
+
+            <!-- 種目選択画面 -->
+            <div id="category-screen" class="screen">
+                <div class="nav-header">
+                    <button class="back-btn" onclick="goHome()">← 戻る</button>
+                    <span class="nav-title" id="category-title"></span>
+                </div>
+                <div class="item-list" id="category-list"></div>
+            </div>
+
+            <!-- 問題セット選択画面 -->
+            <div id="set-screen" class="screen">
+                <div class="nav-header">
+                    <button class="back-btn" onclick="goToCategory()">← 戻る</button>
+                    <span class="nav-title" id="set-title"></span>
+                </div>
+                <div class="item-list" id="set-list"></div>
+            </div>
+
+            <!-- 問題画面 -->
+            <div id="quiz-screen" class="screen">
+                <div class="quiz-header">
+                    <button class="back-btn" onclick="goToSet()">← 戻る</button>
+                    <span class="quiz-progress" id="quiz-progress"></span>
+                </div>
+
+                <div class="question-area">
+                    <div class="question-number" id="question-number"></div>
+                    <div class="question-text" id="question-text"></div>
+                </div>
+
+                <div class="choices" id="choices"></div>
+
+                <div class="result-display" id="result-display">
+                    <div class="result-icon" id="result-icon"></div>
+                    <div class="result-text" id="result-text"></div>
+                </div>
+
+                <div class="explanation" id="explanation">
+                    <div class="explanation-title">解説</div>
+                    <div class="explanation-text" id="explanation-text"></div>
+                </div>
+
+                <button class="next-btn" id="next-btn" onclick="nextQuestion()">次の問題へ</button>
+            </div>
+
+            <!-- 完了画面 -->
+            <div id="complete-screen" class="screen">
+                <div class="complete-icon">🎉</div>
+                <div class="complete-title">お疲れ様でした！</div>
+                <div class="complete-stats" id="complete-stats"></div>
+                <button class="home-btn" onclick="goToSet()">問題セット選択に戻る</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 問題データ（年度 → 種目 → 問題）
+        const quizData = {
+            "2024": {
+                name: "2024年度問題",
+                categories: {
+                    "MT": {
+                        name: "磁気探傷試験(MT)",
+                        questions: []
+                    },
+                    "PT": {
+                        name: "浸透探傷試験(PT)",
+                        questions: []
+                    },
+                    "UT": {
+                        name: "超音波探傷試験(UT)",
+                        questions: []
+                    },
+                    "RT": {
+                        name: "放射線透過試験(RT)",
+                        questions: []
+                    }
+                }
+            }
+        };
+
+        // MT問題データ（94問）
+        const mtQuestions = [
+            { id: 1, question: "磁粉探傷試験が適用できない材料はどれか。", choices: { a: "炭素鋼", b: "低合金鋼", c: "オーステナイト系ステンレス鋼", d: "ニッケル鋼" }, answer: "c", explanation: "オーステナイト系ステンレス鋼は非磁性材料であるため、磁粉探傷試験は適用できない。" },
+            { id: 2, question: "磁粉探傷試験で検出が困難なきずはどれか。", choices: { a: "表面割れ", b: "溶接ビード止端部のアンダカット", c: "内部介在物", d: "研削割れ" }, answer: "c", explanation: "磁粉探傷試験は表面及び表面直下のきず検出に有効であり、内部きずの検出は困難である。" },
+            { id: 3, question: "磁化の強さHと磁束密度Bの関係を表す曲線はどれか。", choices: { a: "正弦曲線", b: "ヒステリシス曲線", c: "双曲線", d: "指数曲線" }, answer: "b", explanation: "磁化の強さHと磁束密度Bの関係を表す曲線をヒステリシス曲線（磁化曲線）という。" },
+            { id: 4, question: "試験体を磁化したときの反磁界の影響について、正しい記述はどれか。", choices: { a: "試験体の長さが長くなると反磁界は大きくなる", b: "反磁界は試験体の磁化を弱める方向に作用する", c: "反磁界は試験体の磁化を強める方向に作用する", d: "反磁界は試験体の形状に関係しない" }, answer: "b", explanation: "反磁界は試験体内部に生じる磁界であり、磁化を弱める方向に作用する。試験体の長さが短いほど反磁界は大きくなる。" },
+            { id: 5, question: "磁粉探傷試験において、検出しやすいきずの方向はどれか。", choices: { a: "磁力線に対して平行なきず", b: "磁力線に対して直角なきず", c: "磁力線に対して45度のきず", d: "きずの方向は検出に影響しない" }, answer: "b", explanation: "磁力線に対して直角方向のきずは磁束漏洩が最大となり、最も検出しやすい。" },
+            { id: 6, question: "交流磁化の特徴として、正しい記述はどれか。", choices: { a: "深い内部きずの検出に適している", b: "表皮効果により表面きずの検出に適している", c: "残留磁化が大きい", d: "脱磁が困難である" }, answer: "b", explanation: "交流磁化は表皮効果により電流が試験体表面に集中するため、表面きずの検出に適している。" },
+            { id: 7, question: "磁粉探傷試験の連続法において、磁化電流を切るタイミングはいつか。", choices: { a: "磁粉を適用する前", b: "磁粉を適用している最中", c: "磁粉の適用を終え、余分な磁粉を除去した後", d: "検査が完了した後" }, answer: "c", explanation: "連続法では、磁粉を適用し余分な磁粉を除去してから磁化電流を切る。これにより、きずによる磁粉模様が形成される。" },
+            { id: 8, question: "残留法が適用できる材料の条件として、正しいものはどれか。", choices: { a: "保磁力が小さい材料", b: "保磁力が大きい材料", c: "透磁率が小さい材料", d: "導電率が大きい材料" }, answer: "b", explanation: "残留法は、磁化を中止しても十分な残留磁気を保持できる保磁力の大きい材料に適用できる。" },
+            { id: 9, question: "軸通電法の特徴として、正しい記述はどれか。", choices: { a: "試験体の軸方向のきずの検出に適している", b: "試験体の周方向のきずの検出に適している", c: "非接触で磁化できる", d: "局部磁化に適している" }, answer: "b", explanation: "軸通電法では、電流方向に垂直な円周方向に磁界が発生するため、軸方向（周方向）のきずの検出に適している。" },
+            { id: 10, question: "極間法において、電磁石の極間距離の適正範囲として、一般的に推奨されるものはどれか。", choices: { a: "50mm以下", b: "75～200mm", c: "250～300mm", d: "350mm以上" }, answer: "b", explanation: "極間法において、極間距離は一般的に75～200mmが推奨される。" },
+            { id: 11, question: "コイル法で磁化する場合、試験体をコイルに対してどのように配置すべきか。", choices: { a: "コイルの中心軸に対して直角に配置", b: "コイルの中心軸に沿って配置", c: "コイルの外側に配置", d: "配置の方向は影響しない" }, answer: "b", explanation: "コイル法では、試験体をコイルの中心軸に沿って配置することで、効率的に縦磁化できる。" },
+            { id: 12, question: "プロッド法の特徴として、正しい記述はどれか。", choices: { a: "全体磁化に適している", b: "局部磁化に適している", c: "周方向磁化に適している", d: "非接触磁化法である" }, answer: "b", explanation: "プロッド法は、2本の電極（プロッド）を試験体表面に接触させて局部的に磁化する方法である。" },
+            { id: 13, question: "蛍光磁粉を使用する場合の照明条件として、正しいものはどれか。", choices: { a: "明るい白色光下で観察", b: "暗所で紫外線照射下で観察", c: "赤色光下で観察", d: "照明条件は問わない" }, answer: "b", explanation: "蛍光磁粉は紫外線（ブラックライト）照射下で蛍光を発するため、暗所で紫外線照射下で観察する。" },
+            { id: 14, question: "湿式法と乾式法の比較において、正しい記述はどれか。", choices: { a: "乾式法は微細なきずの検出に適している", b: "湿式法は粗い表面の検査に適している", c: "湿式法は微細なきずの検出に適している", d: "両者に検出能の差はない" }, answer: "c", explanation: "湿式法は磁粉が検査液中に分散されており、微細なきずへの移動性が良いため、微細なきずの検出に適している。" },
+            { id: 15, question: "磁粉探傷試験における磁粉濃度の確認方法として、正しいものはどれか。", choices: { a: "目視による色の確認", b: "沈殿管による測定", c: "温度計による測定", d: "照度計による測定" }, answer: "b", explanation: "磁粉濃度は沈殿管（JIS規格では100mLの沈殿管を使用）により測定する。" },
+            { id: 16, question: "磁粉探傷試験で使用する紫外線照射灯の波長として、適切なものはどれか。", choices: { a: "200～280nm", b: "315～400nm", c: "400～500nm", d: "500～600nm" }, answer: "b", explanation: "蛍光磁粉探傷試験で使用する紫外線照射灯（ブラックライト）の波長は315～400nm（UV-A領域）が適切である。" },
+            { id: 17, question: "標準試験片（A形標準試験片）の主な用途として、正しいものはどれか。", choices: { a: "磁粉の感度確認", b: "有効磁界の方向と強さの確認", c: "紫外線強度の確認", d: "磁粉濃度の確認" }, answer: "b", explanation: "A形標準試験片は、試験体表面における有効磁界の方向と強さを確認するために使用する。" },
+            { id: 18, question: "磁粉探傷試験において、きず以外で磁粉模様を生じる原因として、適切でないものはどれか。", choices: { a: "材質の局部的変化", b: "断面形状の急変部", c: "試験体の温度変化", d: "溶接境界部" }, answer: "c", explanation: "試験体の温度変化は疑似模様の原因とはならない。材質変化、断面急変部、溶接境界部などが疑似模様の原因となる。" },
+            { id: 19, question: "脱磁の目的として、正しい記述はどれか。", choices: { a: "きず検出感度を向上させる", b: "残留磁気による悪影響を防止する", c: "試験体の温度を下げる", d: "磁粉の付着を促進する" }, answer: "b", explanation: "脱磁は、検査後の残留磁気による後工程（溶接、機械加工など）への悪影響を防止するために行う。" },
+            { id: 20, question: "交流を用いた脱磁方法として、正しいものはどれか。", choices: { a: "一定の交流電流を連続して流す", b: "交流電流を徐々に減少させながら流す", c: "交流電流を徐々に増加させながら流す", d: "直流電流を交互に極性を変えて流す" }, answer: "b", explanation: "交流減衰法による脱磁では、交流電流を徐々に減少させながら流すことで、ヒステリシスループを徐々に小さくして脱磁する。" },
+            { id: 21, question: "磁粉探傷試験の前処理として、適切でないものはどれか。", choices: { a: "油脂の除去", b: "スケールの除去", c: "塗装の除去", d: "試験体の予熱" }, answer: "d", explanation: "磁粉探傷試験の前処理として、油脂、スケール、塗装などの除去は必要だが、試験体の予熱は通常必要ない。" },
+            { id: 22, question: "磁粉探傷試験において、直流磁化と交流磁化の比較として、正しい記述はどれか。", choices: { a: "直流磁化は表面きずの検出に優れている", b: "交流磁化は表面下きずの検出に優れている", c: "直流磁化は表面下きずの検出に優れている", d: "両者に差はない" }, answer: "c", explanation: "直流磁化は浸透深さが深いため表面下きずの検出に優れ、交流磁化は表皮効果により表面きずの検出に優れている。" },
+            { id: 23, question: "磁粉探傷試験で検出されたきず指示の記録方法として、一般的でないものはどれか。", choices: { a: "スケッチ", b: "写真撮影", c: "転写法", d: "X線撮影" }, answer: "d", explanation: "磁粉探傷試験のきず指示の記録には、スケッチ、写真撮影、転写法などが用いられる。X線撮影は放射線透過試験の方法である。" },
+            { id: 24, question: "磁粉探傷試験における通電法で、接触不良があった場合に起こりうる問題はどれか。", choices: { a: "試験体の脱磁", b: "アークストライクによる損傷", c: "磁粉濃度の低下", d: "紫外線強度の低下" }, answer: "b", explanation: "通電法で接触不良があると、アークストライクが発生し、試験体表面に熱的損傷を与えることがある。" },
+            { id: 25, question: "磁粉探傷試験において、複雑な形状の試験体を検査する場合の注意点として、正しいものはどれか。", choices: { a: "単一方向の磁化で十分である", b: "異なる方向に磁化して検査する必要がある", c: "磁化電流を小さくする", d: "磁粉濃度を下げる" }, answer: "b", explanation: "複雑な形状の試験体では、あらゆる方向のきずを検出するため、異なる方向（通常は直交する2方向）に磁化して検査する必要がある。" },
+            { id: 26, question: "磁粉探傷試験における磁化電流の種類として、適切でないものはどれか。", choices: { a: "交流", b: "直流", c: "半波整流電流", d: "高周波電流" }, answer: "d", explanation: "磁粉探傷試験で使用される磁化電流は、交流、直流、半波整流電流、全波整流電流などである。高周波電流は通常使用されない。" },
+            { id: 27, question: "磁粉探傷試験で、きずの深さを推定する方法として、最も適切なものはどれか。", choices: { a: "磁粉模様の濃さから推定", b: "磁粉模様の長さから推定", c: "磁粉探傷試験では深さの推定は困難", d: "磁化電流値から推定" }, answer: "c", explanation: "磁粉探傷試験では、きずの存在と表面での広がりは確認できるが、深さの正確な推定は困難である。" },
+            { id: 28, question: "磁粉探傷試験において、試験体表面の状態が粗い場合の影響として、正しいものはどれか。", choices: { a: "きず検出感度が向上する", b: "バックグラウンドノイズが増加する", c: "磁化が容易になる", d: "脱磁が容易になる" }, answer: "b", explanation: "試験体表面が粗い場合、磁粉が凹凸に付着してバックグラウンドノイズが増加し、きず検出が困難になることがある。" },
+            { id: 29, question: "強磁性体の磁気特性を表すパラメータとして、適切でないものはどれか。", choices: { a: "透磁率", b: "保磁力", c: "残留磁気", d: "導電率" }, answer: "d", explanation: "透磁率、保磁力、残留磁気は強磁性体の磁気特性を表すパラメータである。導電率は電気的特性であり、磁気特性ではない。" },
+            { id: 30, question: "磁粉探傷試験で使用する磁粉の粒径について、正しい記述はどれか。", choices: { a: "粒径が大きいほど感度が高い", b: "粒径が小さいほど感度が高い", c: "粒径は感度に影響しない", d: "湿式法では粗い磁粉を使用する" }, answer: "b", explanation: "磁粉の粒径が小さいほど微細なきずへの移動性が良く、感度が高くなる。ただし、細かすぎるとバックグラウンドが増加する。" },
+            { id: 31, question: "磁粉探傷試験において、円筒形試験体の内面を検査する場合に適した磁化方法はどれか。", choices: { a: "軸通電法", b: "コイル法", c: "中心導体法", d: "極間法" }, answer: "c", explanation: "中心導体法は、円筒形試験体の中空部に導体を通して電流を流す方法で、内面の周方向磁化に適している。" },
+            { id: 32, question: "磁粉探傷試験における磁界強度計（ガウスメータ）の用途として、正しいものはどれか。", choices: { a: "磁粉濃度の測定", b: "試験体表面の磁界強度の測定", c: "紫外線強度の測定", d: "電流値の測定" }, answer: "b", explanation: "磁界強度計（ガウスメータ）は、試験体表面の磁界強度を測定するために使用する。" },
+            { id: 33, question: "溶接部の磁粉探傷試験において、ビード止端部に発生しやすいきずはどれか。", choices: { a: "ブローホール", b: "スラグ巻き込み", c: "止端割れ", d: "溶け込み不良" }, answer: "c", explanation: "ビード止端部には応力集中が起こりやすく、止端割れが発生しやすい。" },
+            { id: 34, question: "磁粉探傷試験の検査液の温度管理として、適切な温度範囲はどれか。", choices: { a: "0～10℃", b: "10～50℃", c: "50～60℃", d: "60℃以上" }, answer: "b", explanation: "検査液の温度は一般的に10～50℃の範囲で管理する。極端な温度は磁粉の分散性や検査液の粘度に影響する。" },
+            { id: 35, question: "磁粉探傷試験でB形標準試験片を使用する目的として、正しいものはどれか。", choices: { a: "磁界の方向確認", b: "磁粉と検査液の性能確認", c: "脱磁の確認", d: "紫外線強度の確認" }, answer: "b", explanation: "B形標準試験片は、磁粉および検査液の性能（感度）を確認するために使用する。" },
+            { id: 36, question: "強磁性体の磁区について、正しい記述はどれか。", choices: { a: "磁区は外部磁界がないと存在しない", b: "磁区内の磁気モーメントはランダムに配列している", c: "磁区内の磁気モーメントは同一方向に揃っている", d: "磁区の大きさは材料に関係なく一定である" }, answer: "c", explanation: "磁区とは、強磁性体中で磁気モーメントが同一方向に揃った領域のことである。" },
+            { id: 37, question: "磁粉探傷試験において、適切な磁化電流値を決定する際の基準として、正しいものはどれか。", choices: { a: "試験体の長さ", b: "試験体の断面積または直径", c: "試験体の温度", d: "検査液の濃度" }, answer: "b", explanation: "磁化電流値は、試験体の断面積または直径に基づいて決定される。" },
+            { id: 38, question: "磁粉探傷試験で軟鋼と硬鋼を比較した場合の特性として、正しい記述はどれか。", choices: { a: "軟鋼の方が保磁力が大きい", b: "硬鋼の方が保磁力が大きい", c: "両者の保磁力は同じである", d: "保磁力と硬さは関係がない" }, answer: "b", explanation: "一般に、硬鋼は軟鋼よりも保磁力が大きい。硬度が高いほど保磁力が大きくなる傾向がある。" },
+            { id: 39, question: "磁粉探傷試験における漏洩磁束について、正しい記述はどれか。", choices: { a: "きずがないと漏洩磁束は発生しない", b: "漏洩磁束はきずの深さに比例する", c: "漏洩磁束は磁粉を引き付ける力となる", d: "漏洩磁束は磁化方向に平行なきずで最大となる" }, answer: "c", explanation: "漏洩磁束は、きず部分から空気中に漏れ出した磁束であり、この磁束が磁粉を引き付けて模様を形成する。" },
+            { id: 40, question: "磁粉探傷試験で、同一試験体に対して連続法と残留法の両方が適用できる場合、正しい記述はどれか。", choices: { a: "連続法の方が一般に感度が高い", b: "残留法の方が一般に感度が高い", c: "両者の感度は同じである", d: "感度は磁化方法に依存しない" }, answer: "a", explanation: "一般に連続法の方が残留法よりも検出感度が高い。残留法は磁化電流を切った後の残留磁気を利用するため、連続法に比べて磁界強度が弱くなる。" },
+            { id: 41, question: "磁粉探傷試験のカラーコントラスト法について、正しい記述はどれか。", choices: { a: "蛍光磁粉を使用する方法である", b: "白色または赤色など有色の磁粉を使用する方法である", c: "紫外線照射下で観察する方法である", d: "暗所で観察する方法である" }, answer: "b", explanation: "カラーコントラスト法（非蛍光法）は、白色や赤色など有色の磁粉を使用し、通常の可視光下で観察する方法である。" },
+            { id: 42, question: "磁粉探傷試験において、磁極の位置を変えながら検査を行う理由として、正しいものはどれか。", choices: { a: "試験体全体を均一に加熱するため", b: "異なる方向のきずを検出するため", c: "磁粉濃度を均一にするため", d: "脱磁を容易にするため" }, answer: "b", explanation: "磁極の位置を変えることで磁界の方向が変わり、異なる方向のきずを検出できるようになる。" },
+            { id: 43, question: "磁粉探傷試験でリフティングパワー（吸引力）試験を行う目的として、正しいものはどれか。", choices: { a: "磁粉濃度の確認", b: "電磁石または電磁ヨークの磁化能力の確認", c: "紫外線強度の確認", d: "検査液の粘度の確認" }, answer: "b", explanation: "リフティングパワー試験は、電磁石または電磁ヨークの磁化能力（吸引力）を確認するために行う。" },
+            { id: 44, question: "鋳鋼品の磁粉探傷試験で注意すべき点として、正しいものはどれか。", choices: { a: "鋳鋼品は非磁性体なので検査できない", b: "鋳肌の粗さによるバックグラウンドノイズに注意する", c: "鋳鋼品は残留法のみ適用できる", d: "鋳鋼品には乾式法のみ適用できる" }, answer: "b", explanation: "鋳鋼品は表面が粗い場合が多く、バックグラウンドノイズが発生しやすいので注意が必要である。" },
+            { id: 45, question: "磁粉探傷試験における全周磁化法の特徴として、正しい記述はどれか。", choices: { a: "一方向の磁化のみ行う", b: "直交する二方向の磁化を同時または交互に行う", c: "脱磁を行いながら磁化する", d: "残留法のみに適用できる" }, answer: "b", explanation: "全周磁化法は、直交する二方向の磁化を同時または交互に行い、あらゆる方向のきずを一度の操作で検出できる方法である。" },
+            { id: 46, question: "磁粉探傷試験の観察において、照度が不足している場合の影響として、正しいものはどれか。", choices: { a: "微細なきず指示模様を見逃す可能性がある", b: "疑似模様が増加する", c: "磁粉濃度が低下する", d: "試験体が過熱する" }, answer: "a", explanation: "照度が不足すると、微細なきず指示模様の視認性が低下し、見逃す可能性がある。" },
+            { id: 47, question: "磁粉探傷試験で磁化電流として衝撃電流を使用する利点として、正しいものはどれか。", choices: { a: "試験体の発熱が少ない", b: "連続通電より感度が低い", c: "脱磁が容易である", d: "疑似模様が増加する" }, answer: "a", explanation: "衝撃電流は短時間の通電であるため、試験体の発熱が少なく、熱による影響を軽減できる。" },
+            { id: 48, question: "磁粉探傷試験において、試験体の形状による磁化の難易について、正しい記述はどれか。", choices: { a: "L/D比が小さいほど磁化しやすい", b: "L/D比が大きいほど磁化しやすい", c: "形状は磁化に影響しない", d: "断面が複雑なほど磁化しやすい" }, answer: "b", explanation: "L/D比（長さと直径の比）が大きいほど反磁界の影響が小さくなり、磁化しやすくなる。" },
+            { id: 49, question: "磁粉探傷試験における直流通電法と交流通電法の比較として、正しい記述はどれか。", choices: { a: "交流通電法は残留法に適している", b: "直流通電法は表面きずの検出に優れている", c: "交流通電法は脱磁が容易である", d: "直流通電法は脱磁が容易である" }, answer: "c", explanation: "交流通電法は、通電を停止すると速やかに磁化が減少するため脱磁が容易である。" },
+            { id: 50, question: "磁粉探傷試験で使用する検査液の粘度が高すぎる場合の影響として、正しいものはどれか。", choices: { a: "磁粉の移動性が向上する", b: "磁粉の移動性が低下する", c: "バックグラウンドが減少する", d: "きず検出感度が向上する" }, answer: "b", explanation: "検査液の粘度が高すぎると、磁粉の移動性が低下し、きずへの集積が妨げられる。" },
+            { id: 51, question: "磁粉探傷試験において、電流貫通法と中心導体法の違いとして、正しい記述はどれか。", choices: { a: "電流貫通法は試験体に直接電流を流す", b: "中心導体法は試験体に直接電流を流す", c: "電流貫通法は導体を試験体の中空部に通す", d: "両者に違いはない" }, answer: "c", explanation: "電流貫通法（中心導体法）は、試験体の中空部に導体を通して電流を流す方法である。試験体自体には電流が流れない。" },
+            { id: 52, question: "磁粉探傷試験において、脱磁後の残留磁気の確認方法として、適切なものはどれか。", choices: { a: "沈殿管による確認", b: "磁界強度計による確認", c: "紫外線照射による確認", d: "照度計による確認" }, answer: "b", explanation: "脱磁後の残留磁気は、磁界強度計（ガウスメータ）で測定して確認する。" },
+            { id: 53, question: "磁粉探傷試験において、試験体の角部や端部で注意すべき点として、正しいものはどれか。", choices: { a: "これらの部位では磁粉が付着しにくい", b: "これらの部位では疑似模様が発生しやすい", c: "これらの部位では磁化が不可能である", d: "これらの部位では脱磁が不要である" }, answer: "b", explanation: "角部や端部は磁束が集中しやすく、疑似模様（漏洩磁束による模様）が発生しやすい。" },
+            { id: 54, question: "磁粉探傷試験で極間法を使用する際、電磁石の脚部（磁極）と試験体表面の接触について、正しい記述はどれか。", choices: { a: "接触は必要ない（非接触で磁化可能）", b: "良好な接触が必要である", c: "接触させてはならない", d: "片側のみ接触させる" }, answer: "b", explanation: "極間法では、電磁石の脚部と試験体表面の良好な接触が磁化効率に重要である。" },
+            { id: 55, question: "磁粉探傷試験で検出されたきず指示模様の評価において、考慮すべき事項として適切でないものはどれか。", choices: { a: "指示模様の長さ", b: "指示模様の方向", c: "指示模様の発生位置", d: "検査員の経験年数" }, answer: "d", explanation: "きず指示模様の評価には、長さ、方向、発生位置などの客観的な情報を考慮する。検査員の経験年数は評価基準ではない。" },
+            { id: 56, question: "磁粉探傷試験において、試験体温度が高い場合（例：50℃以上）の影響として、正しいものはどれか。", choices: { a: "検査液の蒸発や磁粉の性能低下の可能性がある", b: "きず検出感度が向上する", c: "磁化が容易になる", d: "影響はない" }, answer: "a", explanation: "試験体温度が高いと、検査液の蒸発や磁粉（特に蛍光磁粉）の性能低下が起こる可能性がある。" },
+            { id: 57, question: "磁粉探傷試験の湿式法で使用する検査液の種類として、適切でないものはどれか。", choices: { a: "水", b: "灯油", c: "専用の水溶性検査液", d: "塩酸" }, answer: "d", explanation: "検査液には水、灯油、専用の水溶性検査液などが使用される。塩酸は腐食性があり使用されない。" },
+            { id: 58, question: "磁粉探傷試験において、線状指示模様と円形指示模様の区別として、JISで定められている基準はどれか。", choices: { a: "長さと幅の比が2を超えるものを線状とする", b: "長さと幅の比が3を超えるものを線状とする", c: "長さが5mmを超えるものを線状とする", d: "幅が2mmを超えるものを線状とする" }, answer: "b", explanation: "JISでは、長さと幅の比が3を超える指示模様を線状指示模様、3以下のものを円形指示模様と区別している。" },
+            { id: 59, question: "磁粉探傷試験の適用範囲として、適切でないものはどれか。", choices: { a: "溶接部の表面きず検出", b: "鍛造品の表面きず検出", c: "アルミニウム合金の表面きず検出", d: "鋳鋼品の表面きず検出" }, answer: "c", explanation: "アルミニウム合金は非磁性材料であるため、磁粉探傷試験は適用できない。" },
+            { id: 60, question: "磁粉探傷試験における磁粉の種類として、適切でないものはどれか。", choices: { a: "蛍光磁粉", b: "非蛍光磁粉（黒色）", c: "非蛍光磁粉（赤色）", d: "放射性磁粉" }, answer: "d", explanation: "磁粉には蛍光磁粉と非蛍光磁粉（黒色、赤色、灰色など）がある。放射性磁粉は存在しない。" },
+            { id: 61, question: "磁粉探傷試験において、C形標準試験片の使用目的として、正しいものはどれか。", choices: { a: "磁粉濃度の確認", b: "連続法と残留法の磁化の適否確認", c: "紫外線強度の確認", d: "電磁石の吸引力確認" }, answer: "b", explanation: "C形標準試験片は、連続法と残留法の磁化の適否を確認するために使用する。" },
+            { id: 62, question: "磁粉探傷試験報告書に記載すべき事項として、適切でないものはどれか。", choices: { a: "試験体の識別", b: "磁化方法と磁化条件", c: "検査員の年齢", d: "試験結果" }, answer: "c", explanation: "報告書には試験体の識別、磁化方法・条件、試験結果などを記載する。検査員の年齢は記載事項ではない。" },
+            { id: 63, question: "磁粉探傷試験において、同一箇所を複数回磁化して検査する理由として、正しいものはどれか。", choices: { a: "脱磁を容易にするため", b: "異なる方向のきずを検出するため", c: "磁粉濃度を調整するため", d: "検査液を乾燥させるため" }, answer: "b", explanation: "異なる方向に磁化することで、様々な方向のきずを検出することができる。" },
+            { id: 64, question: "磁粉探傷試験において、プロッド間隔の適正範囲として、一般的に推奨されるものはどれか。", choices: { a: "50mm以下", b: "75～200mm", c: "250～300mm", d: "300mm以上" }, answer: "b", explanation: "プロッド法においても極間法と同様に、プロッド間隔は一般的に75～200mmが推奨される。" },
+            { id: 65, question: "磁粉探傷試験で使用する蛍光磁粉の観察に必要な紫外線強度として、JISで規定されている最小値はどれか。", choices: { a: "500μW/cm²", b: "1000μW/cm²", c: "2000μW/cm²", d: "3000μW/cm²" }, answer: "b", explanation: "JISでは、蛍光磁粉の観察に必要な紫外線強度の最小値は1000μW/cm²と規定されている。" },
+            { id: 66, question: "磁粉探傷試験において、磁束密度の単位として正しいものはどれか。", choices: { a: "アンペア毎メートル（A/m）", b: "テスラ（T）", c: "ヘンリー（H）", d: "ウェーバ（Wb）" }, answer: "b", explanation: "磁束密度の単位はテスラ（T）である。A/mは磁界の強さ、Hはインダクタンス、Wbは磁束の単位である。" },
+            { id: 67, question: "磁粉探傷試験で、浅いきずと深いきずを比較した場合の漏洩磁束について、正しい記述はどれか。", choices: { a: "浅いきずの方が漏洩磁束が大きい", b: "深いきずの方が漏洩磁束が大きい", c: "きずの深さは漏洩磁束に影響しない", d: "漏洩磁束の大きさはきずの幅のみに依存する" }, answer: "b", explanation: "一般に、きずが深いほど漏洩磁束が大きくなり、磁粉模様が明瞭になる傾向がある。" },
+            { id: 68, question: "磁粉探傷試験における連続法の手順として、正しい順序はどれか。", choices: { a: "磁化→磁粉適用→磁化停止→観察", b: "磁粉適用→磁化→磁化停止→観察", c: "磁化→磁粉適用→観察→磁化停止", d: "磁粉適用→観察→磁化→磁化停止" }, answer: "a", explanation: "連続法では、磁化しながら磁粉を適用し、磁化を停止した後に観察を行う。" },
+            { id: 69, question: "磁粉探傷試験において、試験体が大きくて装置に入らない場合に適した磁化方法はどれか。", choices: { a: "コイル法", b: "極間法（携帯用電磁石）", c: "軸通電法", d: "全周磁化法" }, answer: "b", explanation: "大型の試験体には、携帯用電磁石（ハンドマグナ）を使用した極間法が適している。" },
+            { id: 70, question: "磁粉探傷試験の乾式法で使用する磁粉の適用方法として、適切でないものはどれか。", choices: { a: "散布器による散布", b: "ゴム球による散布", c: "検査液への浸漬", d: "スプレー缶による散布" }, answer: "c", explanation: "乾式法では、散布器、ゴム球、スプレー缶などにより乾燥した磁粉を直接散布する。検査液への浸漬は湿式法である。" },
+            { id: 71, question: "磁粉探傷試験において、ワイヤブラシで表面を清掃した直後に注意すべき点として、正しいものはどれか。", choices: { a: "表面が帯磁している可能性がある", b: "表面温度が上昇している", c: "表面が酸化している", d: "注意すべき点はない" }, answer: "a", explanation: "ワイヤブラシによる清掃で表面が帯磁することがあり、これが疑似模様の原因となる可能性がある。" },
+            { id: 72, question: "磁粉探傷試験で半波整流電流を使用する利点として、正しいものはどれか。", choices: { a: "表面きずの検出に優れている", b: "表面下きずの検出に優れている", c: "脱磁が容易である", d: "試験体の発熱が少ない" }, answer: "b", explanation: "半波整流電流は直流成分を含むため、浸透深さが深く、表面下きずの検出に優れている。" },
+            { id: 73, question: "磁粉探傷試験において、検査感度に影響を与える因子として、適切でないものはどれか。", choices: { a: "磁化電流値", b: "磁粉濃度", c: "照明条件", d: "検査員の身長" }, answer: "d", explanation: "検査感度には、磁化電流値、磁粉濃度、照明条件などが影響する。検査員の身長は感度に影響しない。" },
+            { id: 74, question: "磁粉探傷試験で、試験体に油脂が付着している場合の影響として、正しいものはどれか。", choices: { a: "磁化が容易になる", b: "磁粉のきずへの付着を妨げる", c: "検出感度が向上する", d: "脱磁が容易になる" }, answer: "b", explanation: "油脂が付着していると、磁粉がきずに付着しにくくなり、検出感度が低下する。" },
+            { id: 75, question: "磁粉探傷試験において、交流電流と直流電流の周波数による違いとして、正しい記述はどれか。", choices: { a: "直流電流には周波数がある", b: "交流電流の周波数が高いほど浸透深さが深い", c: "交流電流の周波数が高いほど浸透深さが浅い", d: "周波数は浸透深さに影響しない" }, answer: "c", explanation: "交流電流の周波数が高いほど表皮効果が強くなり、浸透深さが浅くなる。" },
+            { id: 76, question: "磁粉探傷試験で、きず指示模様と疑似模様を区別する方法として、適切なものはどれか。", choices: { a: "再磁化して模様の再現性を確認する", b: "模様の色で判断する", c: "模様の形状のみで判断する", d: "区別する方法はない" }, answer: "a", explanation: "再磁化して模様の再現性を確認することで、きず指示模様と疑似模様を区別できる。疑似模様は再現しない場合がある。" },
+            { id: 77, question: "磁粉探傷試験における電流通電法の危険性として、正しいものはどれか。", choices: { a: "放射線被ばく", b: "感電や接触部の過熱", c: "有毒ガスの発生", d: "危険性はない" }, answer: "b", explanation: "電流通電法では、大電流を使用するため感電や接触部の過熱による火傷の危険性がある。" },
+            { id: 78, question: "磁粉探傷試験において、コイル法の磁化能力を高める方法として、正しいものはどれか。", choices: { a: "コイルの巻数を減らす", b: "コイルの巻数を増やす", c: "コイルと試験体の距離を離す", d: "磁化電流を減らす" }, answer: "b", explanation: "コイル法では、コイルの巻数を増やすか、電流値を上げることで磁化能力を高めることができる。" },
+            { id: 79, question: "磁粉探傷試験の標準化について、JISで規定されている内容として、正しいものはどれか。", choices: { a: "検査員の服装", b: "試験方法と手順", c: "検査室の壁の色", d: "検査の時間帯" }, answer: "b", explanation: "JISでは、磁粉探傷試験の試験方法と手順が規定されている。" },
+            { id: 80, question: "磁粉探傷試験で、きず検出に適した磁界の強さの目安として、正しいものはどれか。", choices: { a: "100A/m以下", b: "2400～4800A/m程度", c: "10000A/m以上", d: "磁界の強さは関係ない" }, answer: "b", explanation: "一般的に、きず検出に適した磁界の強さは2400～4800A/m程度とされている。" },
+            { id: 81, question: "磁粉探傷試験において、磁粉の色と試験体表面色の関係として、正しい記述はどれか。", choices: { a: "同じ色が良い", b: "コントラストが高い方が良い", c: "色は検出に影響しない", d: "蛍光磁粉では関係ない" }, answer: "b", explanation: "磁粉と試験体表面のコントラストが高いほど、きず指示模様の視認性が向上する。" },
+            { id: 82, question: "磁粉探傷試験で、磁化電流値を必要以上に大きくした場合の影響として、正しいものはどれか。", choices: { a: "検出感度が必ず向上する", b: "バックグラウンドノイズが増加する可能性がある", c: "脱磁が容易になる", d: "影響はない" }, answer: "b", explanation: "磁化電流が大きすぎると、磁粉が試験体表面全体に付着してバックグラウンドノイズが増加し、かえってきず検出が困難になることがある。" },
+            { id: 83, question: "磁粉探傷試験における残留法の適用手順として、正しい順序はどれか。", choices: { a: "磁化→磁化停止→磁粉適用→観察", b: "磁粉適用→磁化→磁化停止→観察", c: "磁化→磁粉適用→磁化停止→観察", d: "磁粉適用→観察→磁化→磁化停止" }, answer: "a", explanation: "残留法では、磁化して磁化を停止した後、残留磁気を利用して磁粉を適用し観察する。" },
+            { id: 84, question: "磁粉探傷試験で使用する磁粉の材質として、一般的に使用されるものはどれか。", choices: { a: "酸化鉄（Fe₃O₄など）", b: "酸化アルミニウム", c: "酸化チタン", d: "酸化銅" }, answer: "a", explanation: "磁粉には、酸化鉄（Fe₃O₄：マグネタイト）や鉄粉が一般的に使用される。" },
+            { id: 85, question: "磁粉探傷試験において、湿式蛍光磁粉法の検査液中の磁粉濃度として、一般的に推奨される範囲はどれか。", choices: { a: "0.1～0.4mL/100mL", b: "1.2～2.4mL/100mL", c: "5.0～10.0mL/100mL", d: "15.0～20.0mL/100mL" }, answer: "a", explanation: "湿式蛍光磁粉法の磁粉濃度は、一般的に0.1～0.4mL/100mL程度が推奨される。" },
+            { id: 86, question: "磁粉探傷試験において、フェライト系ステンレス鋼の検査について、正しい記述はどれか。", choices: { a: "非磁性体なので検査できない", b: "強磁性体なので検査できる", c: "常磁性体なので検査できない", d: "反磁性体なので検査できない" }, answer: "b", explanation: "フェライト系ステンレス鋼は強磁性体であるため、磁粉探傷試験が適用できる。" },
+            { id: 87, question: "磁粉探傷試験において、溶接熱影響部（HAZ）に発生しやすいきずはどれか。", choices: { a: "ブローホール", b: "スラグ巻き込み", c: "水素割れ（低温割れ）", d: "溶け込み不良" }, answer: "c", explanation: "溶接熱影響部（HAZ）では、急冷による硬化と水素の影響により、水素割れ（低温割れ）が発生しやすい。" },
+            { id: 88, question: "磁粉探傷試験において、永久磁石を用いた磁化の特徴として、正しい記述はどれか。", choices: { a: "磁化の強さを調整できる", b: "電源が不要である", c: "交流磁化ができる", d: "大型試験体に適している" }, answer: "b", explanation: "永久磁石を用いた磁化は電源が不要であり、携帯性に優れている。" },
+            { id: 89, question: "磁粉探傷試験で検出された指示模様の長さが判定基準を超えた場合の対応として、正しいものはどれか。", choices: { a: "そのまま合格とする", b: "不合格として記録し、必要な処置を行う", c: "再検査せずに報告する", d: "検査員の判断で合格にできる" }, answer: "b", explanation: "判定基準を超えた指示模様が検出された場合は、不合格として記録し、補修や再検査などの必要な処置を行う。" },
+            { id: 90, question: "磁粉探傷試験において、試験体の表面が濡れている場合の影響として、正しいものはどれか。", choices: { a: "乾式法では磁粉が付着しにくくなる", b: "湿式法では検出感度が向上する", c: "磁化が容易になる", d: "影響はない" }, answer: "a", explanation: "試験体表面が濡れていると、乾式法では磁粉が付着しにくくなり、検出感度が低下する。" },
+            { id: 91, question: "磁粉探傷試験で使用する紫外線照射灯のウォームアップ時間として、一般的に推奨されるものはどれか。", choices: { a: "電源投入直後から使用可能", b: "約5分", c: "約30分", d: "約1時間" }, answer: "b", explanation: "紫外線照射灯は、十分な紫外線強度を得るために約5分間のウォームアップ時間が推奨される。" },
+            { id: 92, question: "磁粉探傷試験における暗順応について、正しい記述はどれか。", choices: { a: "蛍光磁粉観察前に明るい場所に目を慣らすこと", b: "蛍光磁粉観察前に暗所に目を慣らすこと", c: "非蛍光磁粉の観察に必要な手順", d: "暗順応は不要である" }, answer: "b", explanation: "暗順応は、蛍光磁粉の観察前に暗所に目を慣らすことで、微弱な蛍光も見えやすくなる。" },
+            { id: 93, question: "磁粉探傷試験において、検査液の防錆性が低い場合の問題として、正しいものはどれか。", choices: { a: "磁粉濃度が低下する", b: "試験体表面に錆が発生する可能性がある", c: "磁化が困難になる", d: "紫外線強度が低下する" }, answer: "b", explanation: "検査液の防錆性が低いと、検査後に試験体表面に錆が発生する可能性がある。" },
+            { id: 94, question: "磁粉探傷試験の検査記録として保管すべき情報として、適切でないものはどれか。", choices: { a: "試験日と検査員名", b: "磁化方法と磁化条件", c: "検査室の湿度", d: "検出されたきずの位置と大きさ" }, answer: "c", explanation: "検査記録には試験日、検査員名、磁化方法・条件、検出きずの情報などを記録する。検査室の湿度は通常記録事項ではない。" }
+        ];
+
+        // MT問題をquizDataに設定
+        quizData["2024"].categories["MT"].questions = mtQuestions;
+
+        // 2023年度データを追加
+        quizData["2023"] = {
+            name: "2023年度問題",
+            categories: {
+                "MT": { name: "磁気探傷試験(MT)", questions: [] },
+                "PT": { name: "浸透探傷試験(PT)", questions: [] },
+                "UT": { name: "超音波探傷試験(UT)", questions: [] },
+                "RT": { name: "放射線透過試験(RT)", questions: [] }
+            }
+        };
+
+        // UT問題データ（131問）
+        const utQuestions = [
+            { id: 1, question: "次の文は、曲率のある管材（エルボ部）の厚さ測定の内外周探傷ピッチについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "エルボ部内周部と外周部は同じ探傷ピッチで行う。", b: "エルボ部内周部は外周部より探傷ピッチを大きくする。", c: "エルボ部外周部は内周部より探傷ピッチを大きくする。", d: "エルボ部外周部も内周部も曲率のない直管と同じ探傷ピッチで行う。" }, answer: "b", explanation: "エルボ部内周部は外周部より探傷ピッチを大きくする。減肉の著しい部位、すなわち外周部（背側）の管軸方向の曲管部中央付近及びやや下流側の位置を細ピッチで測定するのがよい。" },
+            { id: 2, question: "次の文は、超音波探傷試験を行う目的について述べたものである。適切なものを一つ選び、記号で答えよ。", choices: { a: "製品の破損防止のために、超音波探傷試験を行う。", b: "製品の品質保証のために、超音波探傷試験を行う。", c: "製品の価格を上げるために、超音波探傷試験を行う。", d: "製品を安価に提供するために、超音波探傷試験を行う。" }, answer: "b", explanation: "品質保証は、最終出荷物の品質を保証するために、規格や客先仕様などで決められた試験方法・判定基準などに基づき実施される。" },
+            { id: 3, question: "次の文は、JIS Z 2305に基づく超音波探傷試験技術者レベル2の役割について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "日常、レベル1技術者に対して訓練・指導する責任はあるが、新しく資格を取得したレベル2技術者に対して訓練・指導を行ってはならない。", b: "レベル2技術者は、超音波探傷試験方法の適用限界を決定することはできない。", c: "レベル2技術者は、超音波探傷試験を実施するか、又はレベル1技術者が実施する超音波探傷試験を監督しなければならない。", d: "超音波探傷試験結果を取りまとめて報告し、超音波探傷試験設備と職員についての全責任を持たなければならない。" }, answer: "c", explanation: "レベル2技術者は、NDTを実施し、監督する。レベル2又はそれより下のレベルの全ての作業を実施し、監督する。" },
+            { id: 4, question: "次の文は、超音波探傷試験における用語について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "板波は、薄い板状の固体を伝搬する波で、対称モードと非対称モードに分類され、モードが異なっても位相速度及び群速度は同じである。", b: "SH波は、振動方向が試験体の表面と直角な横波で、一般的な斜角探傷試験に用いられる。", c: "ガイド波は、細長い材料中を長手方向に探傷面と平行方向に伝搬する超音波で、長い配管の探傷に用いられる。", d: "SV波は、振動方向が試験体の表面に垂直な面内で振動する横波で、特殊な超音波斜角探傷に用いる。" }, answer: "c", explanation: "ガイド波は、パイプを軸方向に長距離伝搬する波である。パイプの内外面を境界として発生する波であり、減衰が少なく広範囲の検査が可能である。" },
+            { id: 5, question: "次の文は、JIS Z 3060の適用範囲について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "JIS Z 3060では、厚さ6mm以上のフェライト系の鋼の完全溶込み溶接部の超音波探傷試験方法及び分類方法を規定している。", b: "オーステナイト系ステンレス鋼溶接部の超音波探傷では、JIS Z 3060をそのまま適用することができる。", c: "JIS Z 3060では、厚さ13mm以上のフェライト系の鋼及びオーステナイト系の鋼の完全溶込み溶接部の垂直探傷について規定している。", d: "JIS Z 3060では、厚さ6mm以上のフェライト系の鋼の完全溶込み溶接部の自動探傷についても規定している。" }, answer: "a", explanation: "JIS Z 3060の適用範囲では、厚さ6mm以上のフェライト系鋼の完全溶込み溶接部を規定している。" },
+            { id: 6, question: "次の文は、JIS Z 3060に規定する超音波探傷装置の測定、調整及び点検について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "JIS Z 3060では、探傷器の定期点検は探傷作業の開始時のみ実施する。", b: "JIS Z 3060では、入射点、屈折角、測定範囲及び探傷感度の調整及び点検は作業開始時にのみ行う。", c: "JIS Z 3060では、探傷器の定期点検は、6か月に1回実施する。", d: "JIS Z 3060では、入射点、屈折角、測定範囲及び探傷感度の調整及び点検は、作業開始時と4時間以内ごと及び作業終了時に行う。" }, answer: "d", explanation: "JIS Z 3060では、入射点、STB屈折角、測定範囲及び探傷感度は、作業開始時に測定及び調整し、作業開始後4時間以内ごと及び作業終了時に点検する。" },
+            { id: 7, question: "次の文は、音響インピーダンスについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "周波数を高くすると、音響インピーダンスは小さくなる。", b: "音響インピーダンスは、屈折角の計算に使用する。", c: "音響インピーダンスは、密度と音速の積である。", d: "音響インピーダンスは、2つの媒質の間の反射率である。" }, answer: "c", explanation: "音響インピーダンス(Z)＝ρC（ρ：密度、C：音速）で求まる。" },
+            { id: 8, question: "次の文は、音響インピーダンスと音圧反射率について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "音響インピーダンスは、音速と質量の積で表わされる。", b: "低炭素鋼溶接部の母材と溶着金属のように、音響インピーダンスの値にあまり差のない場合には、その境界面では超音波がほとんど反射しない。", c: "音響インピーダンスは、音圧反射率と無関係である。", d: "音響インピーダンスの大きく異なる二つの物質の境界面に、超音波が垂直に入射すると、音圧反射率は、ほとんど0％になる。" }, answer: "b", explanation: "音響インピーダンスにあまり差のない場合には境界面での反射はほとんど起こらない。" },
+            { id: 9, question: "次の文は、音響インピーダンスについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "音響インピーダンスは、比重と音速の積で表わされる。", b: "音響インピーダンスは、密度と音速の積で表わされる。", c: "音響インピーダンスは、波長と密度の積で表わされる。", d: "音響インピーダンスは、振動数と比重の積で表わされる。" }, answer: "b", explanation: "音響インピーダンス(Z)＝ρC（ρ：密度、C：音速）で求まる。" },
+            { id: 10, question: "次の文は、音圧反射率について述べたものである。片側に銅をクラッドした鋼板を鋼の側から周波数5MHzの探触子で垂直探傷した。境界面における音圧反射率は何％となるか。鋼：音速5,900m/s、密度7.8g/cm³、銅：音速4,700m/s、密度8.9g/cm³", choices: { a: "2.4", b: "2.9", c: "4.8", d: "9.6" }, answer: "c", explanation: "音圧反射率＝(Z2－Z1)/(Z1＋Z2)より計算すると約4.8％となる。" },
+            { id: 11, question: "全没水浸法で各種の材質の試験体を垂直探傷した。表面エコー高さが最大の試験体はどれか。水：1.5×10⁶、アクリル樹脂：3.2×10⁶、アルミニウム：16.9×10⁶、鋼：45.4×10⁶、銅：41.8×10⁶ kg/m²S", choices: { a: "鋼", b: "アクリル樹脂", c: "銅", d: "アルミニウム" }, answer: "a", explanation: "表面エコーは音響インピーダンスが最も大きい鋼が最大となる。" },
+            { id: 12, question: "局部水浸法で厚さ30mmの鋼板を垂直探傷し、表面エコー高さを100％に調整したときの第1回底面エコー高さは何％となるか。材料中の減衰及び音場の拡散は考慮しない。鋼材密度7.8g/cm³、縦波音速5,920m/s、水の密度1g/cm³、音速1,480m/s", choices: { a: "6", b: "12", c: "13", d: "94" }, answer: "c", explanation: "音圧往復通過率から計算すると約13％となる。" },
+            { id: 13, question: "次の文は、水から鋼に超音波が入射するときの現象に関する記述である。正しいものを一つ選び、記号で答えよ。", choices: { a: "水から鋼に垂直に入射した場合、水中では横波は伝搬しないため、境界面での反射は生じない。", b: "水から鋼に斜めに入射した場合、水中では横波は伝搬しないため、鋼中に横波は伝搬しない。", c: "縦波臨界角より大きな角度で水から鋼に斜め入射した場合、鋼中には横波だけが伝搬する。", d: "水中の音速は鋼中の横波音速より小さいため、横波臨界角は存在しない。" }, answer: "c", explanation: "縦波臨界角と横波臨界角の間で超音波が入射すると、屈折横波だけが伝搬する。" },
+            { id: 14, question: "次の文は、超音波探傷における波長の影響について述べたものである。正しいものを選べ。", choices: { a: "波長が長いほど、小さいきずを見つけやすい。", b: "波長が短いほど、金属中における散乱減衰が大きくなる。", c: "波長が短いほど、近距離音場限界距離は短くなる。", d: "波長が長いほど、指向角は小さくなる。" }, answer: "b", explanation: "波長が短いほど金属中における散乱減衰が大きくなる。" },
+            { id: 15, question: "試験周波数と振動子直径が同じ垂直探触子で、縦波の探触子と横波の探触子の指向角と近距離音場限界距離について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "横波の探触子に比べて、縦波の探触子の方が指向角は大きく、近距離音場限界距離は長い。", b: "横波の探触子に比べて、縦波の探触子の方が指向角は小さく、近距離音場限界距離は長い。", c: "横波の探触子に比べて、縦波の探触子の方が指向角は大きく、近距離音場限界距離は短い。", d: "横波の探触子に比べて、縦波の探触子の方が指向角は小さく、近距離音場限界距離は短い。" }, answer: "c", explanation: "縦波λ＞横波λのため、指向角は縦波の方が大きく、近距離音場限界距離は縦波の方が短い。" },
+            { id: 16, question: "次の文は、超音波の伝達特性について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "探傷面が粗い試験体では平滑な試験体に比べ、他の条件が同じ場合であっても、きずエコー高さは低くなる。", b: "標準試験片のように表面が平滑な試験片では、接触媒質の種類を変えると、エコー高さは大きく異なる。", c: "標準試験片のように表面が平滑な試験片の垂直探傷では、接触媒質層の厚さの変動によるエコー高さの差は少ない。", d: "探傷面が粗い試験体の超音波探傷では、周波数が低い方が感度の低下量は大きくなる。" }, answer: "a", explanation: "探傷面が粗い試験体では、平滑な試験体に比べて感度の低下量が大きくなり、きずエコー高さは低くなる。" },
+            { id: 17, question: "次の文は、縦波と横波について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "横波は、せん断波とも呼ばれている。", b: "グリセリンペーストを用いれば横波垂直探触子から発生した横波を直接試験体中に伝搬させることができる。", c: "横波垂直探触子では縦波と横波が同時に発生している。", d: "横波垂直探触子から発生する横波は、縦波からのモード変換によって試験体中に伝搬している。" }, answer: "a", explanation: "横波は、せん断波とも呼ばれている。横波垂直探触子は横方向に振動する圧電素子で横波を発生する。" },
+            { id: 18, question: "次の文は、表面波について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "表面波とは、水浸法において試験体表面で反射された波のことである。", b: "鋼中の表面波の音速は、横波の音速に近く、その約0.9倍である。", c: "表面波の振動方向は、縦波と同一である。", d: "表面波は物体の表面に沿って伝搬する波であり、表面に開口した割れが存在すると超音波は100％反射される。" }, answer: "b", explanation: "表面波の音速は鋼の場合2980m/sであり、横波3230m/sのおよそ0.9倍となる。" },
+            { id: 19, question: "次の文は、鋼板の板波探傷について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "厚さ3mm程度の薄板の探傷には、板波が利用される。", b: "板波を発生させるには、SH波探触子を使用する。", c: "板波には、対称モードと非対称モードがあるが、それぞれ異なった一定の音速であるので、入射角を変化させていずれかのモードにして探傷する。", d: "板波探傷には、板波探傷用の特殊な接触媒質を使用する。" }, answer: "a", explanation: "板波は、主に薄板中を伝搬させる波として使用される。" },
+            { id: 20, question: "水浸法で鋼材を周波数5MHzの探触子で垂直探傷を行なった。この時の鋼材表面における音圧反射率は何％となるか。炭素鋼：音速5,900m/s、密度7.9g/cm³、水：音速1,480m/s、密度1.0g/cm³", choices: { a: "0.9", b: "88.0", c: "93.8", d: "96.8" }, answer: "c", explanation: "音圧反射率＝(Z2－Z1)/(Z1＋Z2)より計算すると約93.8％となる。" },
+            { id: 21, question: "アクリル樹脂と鋼との平らな境界面にアクリル樹脂側から縦波超音波が斜め入射した場合について述べたものである。入射角が縦波臨界角より小さい場合、鋼中にはどの波が伝搬するか。", choices: { a: "鋼中には屈折横波だけが伝搬する。", b: "鋼中には屈折縦波だけが伝搬する。", c: "鋼中には屈折縦波と屈折横波が伝搬する。", d: "鋼中には屈折縦波も屈折横波も伝搬しない。" }, answer: "c", explanation: "入射角が縦波臨界角より小さい場合、鋼中には屈折縦波、屈折横波の両方が伝搬する。" },
+            { id: 22, question: "アクリル樹脂と鋼との平らな境界面にアクリル樹脂側から縦波超音波が斜め入射した場合について述べたものである。入射角が縦波臨界角と横波臨界角の間にある場合、鋼中にはどの波が伝搬するか。", choices: { a: "鋼中には屈折縦波だけが伝搬する。", b: "鋼中には屈折横波だけが伝搬する。", c: "鋼中には屈折縦波と屈折横波が伝搬する。", d: "鋼中には屈折縦波も屈折横波も伝搬しない。" }, answer: "b", explanation: "入射角が縦波臨界角と横波臨界角の間にある場合、横波だけが伝搬する。" },
+            { id: 23, question: "水浸法で鋼材を探傷するとき、鋼材への入射角を14.5°にすると、鋼中縦波の屈折角は何度となるか。鋼中縦波音速5,900m/s、横波音速3,230m/s、水中音速1,480m/s", choices: { a: "14.5", b: "27.2", c: "33.1", d: "86.5" }, answer: "d", explanation: "スネルの法則より、sin14.5°/1480＝sinθL/5900で計算するとθL≒86.5°となる。" },
+            { id: 24, question: "5Z10×10A70(STB屈折角70.0°)の探触子でアルミニウムを超音波探傷するとき、その屈折角は何度になるか。鋼中縦波音速5,920m/s、横波音速3,255m/s、アルミニウム中縦波音速6,260m/s、横波音速3,080m/s", choices: { a: "29.4", b: "62.8", c: "70.0", d: "83.3" }, answer: "b", explanation: "スネルの法則より計算するとθAL＝62.8°となる。" },
+            { id: 25, question: "板厚25mmのアルミニウム合金の突合せ溶接部を5Z10×10A70（STB屈折角71.0度）を用いて探傷した。この探触子のアルミニウム合金中の屈折角は何度となるか。アルミニウム合金中縦波音速6,380m/s、横波音速3,150m/s、STB-A1縦波音速5,900m/s、横波音速3,230m/s", choices: { a: "30.3", b: "67.2", c: "71.0", d: "75.8" }, answer: "b", explanation: "θAL＝sin⁻¹(sin71.0°×3150/3230)＝67.2°となる。" },
+            { id: 26, question: "鋼中で横波が裏面などの平面に入射角が30度で斜めに入射したとき、縦波の反射角は何度であるか。鋼中縦波音速5900m/s、横波音速3230m/s", choices: { a: "16", b: "30", c: "60", d: "66" }, answer: "d", explanation: "縦波反射角βL＝sin⁻¹(sin30°×5900/3230)≒66°となる。" },
+            { id: 27, question: "鋼材中で、横波超音波が直角な角に入射角68°で入射するとき、2回の反射による音圧反射率を求めると何％となるか。", choices: { a: "13", b: "20", c: "42", d: "83" }, answer: "c", explanation: "コーナー部の反射では底面及び端面で2回反射が起こる。68°の入射角で入射した場合、端面での入射角は22°となり、音圧反射率は約42％となる。" },
+            { id: 28, question: "5Z10×10A70、5Z10×10A65、5Z10×10A60及び5Z10×10A45の4個の探触子を用いてRB-41AのNo.1の1/2tの深さにある標準穴を1回反射法で狙ったときのエコー高さが40％になるよう感度を調整した。STB-A2のφ4mm、深さ4mmの標準穴を1回反射法で狙ったとき、最も高いエコー高さが得られるのはどの探触子か。", choices: { a: "5Z10×10A70", b: "5Z10×10A65", c: "5Z10×10A60", d: "5Z10×10A45" }, answer: "d", explanation: "45°探触子はコーナーでモード変換しないので100％の反射となり、最もエコー高さが高くなる。" },
+            { id: 29, question: "次の文は、遅れエコーについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "円柱材の試験体を側面から垂直探傷したとき、モード変換が原因で遅れエコーが現われる。", b: "遅れエコーは、指向角が鋭いほど発生しやすい。", c: "幅の広い試験体を垂直探傷した場合、底面エコーの後に一定間隔で遅れエコーが現われる。", d: "幅が狭く長い試験体を長手方向に垂直探傷し、きずエコーを検出した場合、きずからの遅れエコーが発生する場合がある。" }, answer: "d", explanation: "超音波ビームが側面にあたってモード変換を起こすと、速度の遅い横波で伝搬するため、必ず底面エコーよりも遅れて受信される。" },
+            { id: 30, question: "図1の鋼製の試験体を、探触子2Z20Nを用いて垂直探傷した。図2は、図1の探触子位置で現れた探傷図形を示したものである。正しいものを一つ選び、記号で答えよ。測定範囲は250mm、探傷部分にきずはない。", choices: { a: "(a)", b: "(b)", c: "(c)", d: "(d)" }, answer: "c", explanation: "遅れエコーの問題である。試験体幅30mmを横波が横切る場合、底面エコーより一定間隔で遅れた位置にエコーが現れる。" },
+            { id: 31, question: "次の文は、円柱面エコーの発生原因について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "探触子の接触面積が大きくなり、指向角が小さくなった。", b: "探触子の接触面積が大きくなり、指向角が大きくなった。", c: "探触子の接触面積が小さくなり、指向角が大きくなった。", d: "探触子の接触面積が小さくなり、指向角が小さくなった。" }, answer: "c", explanation: "丸棒の側面に探触子を接触させると接触面積が小さくなるため、指向角が大きくなり円柱面エコーが発生しやすくなる。" },
+            { id: 32, question: "次の超音波探触子のうち、一般的によく使用されているものを一つ選び、記号で答えよ。", choices: { a: "水晶", b: "ファインセラミックス", c: "ジルコンチタン酸鉛", d: "ニオブ酸リチウム" }, answer: "c", explanation: "ジルコンチタン酸鉛系の振動子は、感度が高く、多くの探触子に採用されている。" },
+            { id: 33, question: "次の文は、超音波パルスの発生について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "パルスの発生は、連続波が使用される。", b: "パルスの発生は、三角波が使用される。", c: "パルスの発生は、低周波が使用される。", d: "パルスの発生は、矩形波が使用される。" }, answer: "d", explanation: "超音波パルスの発生には、矩形波（くけいは）が使用されている。" },
+            { id: 34, question: "次の文は、正方形の探触子を有する斜角探触子の指向角について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "5Z10×10A70の場合、鋼の試験体中では上下方向と左右方向の指向角が等しい。", b: "5Z10×10A70の場合、鋼の試験体中では上下方向に比べて、左右方向の指向角が小さい。", c: "5Z10×10A70の場合、鋼の試験体中では左右方向に比べて、上下方向の指向角が小さい。", d: "5Z10×10A45の場合、鋼の試験体中では上下方向と左右方向の指向角が等しい。" }, answer: "b", explanation: "斜角探触子の場合、見掛けの振動子の大きさは左右方向では変わらないが、上下方向が小さくなるため、左右方向の指向角の方が小さくなる。" },
+            { id: 35, question: "次の文は、近距離音場について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "垂直探傷において、きずが近距離音場限界距離X₀より近い距離にあるときは、X₀より遠距離にある同じ条件のきずのエコー高さより必ず高い。", b: "近距離音場にあるきずは、音場が乱れているので検出できないことが多い。", c: "垂直探傷において、きずがX₀より近い距離にある場合、X₀より遠い距離にある同じ条件のきずエコー高さより低いことがある。", d: "近距離音場、遠距離音場にかかわらず、超音波は距離の2乗に反比例して弱くなるため、距離が遠くなるに従って同じ大きさのきずでもきずエコー高さは小さくなる。" }, answer: "c", explanation: "X₀より近い範囲では超音波の音場は複雑に変化するため、エコー高さが低いこともある。" },
+            { id: 36, question: "鍛鋼品を2Z20Nで垂直探傷し、ビーム路程205mmのところにきずを検出した。このビーム路程を規準化距離に換算すると、nはいくらになるか。鋼中縦波音速5900m/s", choices: { a: "2.4", b: "4.8", c: "6.0", d: "6.5" }, answer: "c", explanation: "近距離音場限界距離X₀＝D²/4λ＝400/(4×2.95)＝33.9mm、n＝χF/χ₀＝205/33.9＝6.0となる。" },
+            { id: 37, question: "次の文は、超音波探傷試験における周波数の選定について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "薄板の探傷には、高い周波数が適している。", b: "遠距離分解能は、低い周波数が優れている。", c: "減衰の小さい試験体の底面に近いきずを検出するには、低い周波数が適している。", d: "林状エコーが探傷の支障になるときは高い周波数を使用する。" }, answer: "a", explanation: "薄板の探傷には高い周波数が適している。林状エコーが支障になる場合は低い周波数が適している。" },
+            { id: 38, question: "次の文は、超音波の減衰や損失について述べたものである。正しいものを選べ。", choices: { a: "試験体中を超音波が伝搬するとき、超音波ビームは広がりながら伝搬するため次第に弱くなる。これを散乱減衰という。", b: "金属中を超音波が伝搬するとき、その結晶粒界で反射や屈折が起こり超音波は次第に弱まる。これを散乱減衰という。", c: "試験体に超音波が入射するとき、探触子と探傷面との境界面で超音波の損失がある。これを反射損失という。", d: "金属中を超音波が伝搬するとき、その結晶粒界で反射や屈折が起こり超音波は次第に弱まる。これを拡散減衰という。" }, answer: "b", explanation: "金属中の結晶粒界で超音波が散乱されることによる減衰を、散乱減衰という。" },
+            { id: 39, question: "次の文は、超音波の減衰や損失について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "超音波が試験体中を伝搬するとき、超音波ビームが広がることによる拡散損失の他に、結晶粒での散乱による散乱減衰や内部摩擦などによる粘性減衰がある。金属中では散乱減衰が主体であるが、プラスチックでは粘性減衰が主体となる。", b: "金属中を超音波が伝搬するとき、その結晶粒界で屈折が起こり、超音波は次第に弱まる。これを拡散損失という。", c: "試験体に超音波が入射するとき、探触子と探傷面との境界面で超音波の損失がある。これを反射損失という。", d: "金属材料の結晶粒が大きいと超音波は透過しやすく、減衰は小さい。" }, answer: "a", explanation: "金属では結晶粒があるので散乱減衰が主体であり、プラスチックでは結晶粒がないので粘性減衰が主体となる。" },
+            { id: 40, question: "厚さ50mmの鋼板を、5C20Nの探触子で垂直探傷を行い、健全部でB₁＝75%、B₂＝15%の底面エコーを得た。拡散損失を0.4dB、探傷面での反射損失を1.5dB、底面での反射損失を0.2dBとすると、この鋼板の超音波の減衰係数は何dB/mmか。", choices: { a: "0.12", b: "0.14", c: "0.24", d: "0.28" }, answer: "a", explanation: "減衰係数α＝{(B1/B2)－(拡散損失＋反射損失)}/(2×t)より計算すると約0.12dB/mmとなる。" },
+            { id: 41, question: "両面を表面粗さ6μmRzの滑らかに仕上げた厚さ50mmの鋼板を、アクリル樹脂遅延材付探触子(5Z20N)を用いてB₁/B₂の測定を行ったところ、5.0dBの値を得た。この結果から鋼板の減衰係数を計算すると何dB/mmとなるか。鋼板とアクリル樹脂の接触部における反射損失を2.0dB/回とし、超音波ビームの広がりの影響は無視する。", choices: { a: "0.03", b: "0.05", c: "0.06", d: "0.10" }, answer: "a", explanation: "減衰係数α＝{5.0－2.0}/(2×50)＝0.03dB/mmとなる。" },
+            { id: 42, question: "厚さが500mmで25μmRzに仕上げ加工した鍛鋼品を探触子2Z28Nで探傷したところ、健全部においてB₁/B₂の値が12.5dBであった。この鍛鋼品の減衰係数を計算した結果、何dB/mmとなったか。探傷面での反射損失は3dB/回、底面での反射損失は1dB/回とする。", choices: { a: "0.003", b: "0.005", c: "0.009", d: "0.013" }, answer: "a", explanation: "拡散損失6dBを考慮し、減衰係数α＝{12.5－(6.0+3.0+1.0)}/(2×500)＝0.0025dB/mm≒0.003dB/mmとなる。" },
+            { id: 43, question: "次の文は、圧延鋼材の超音波横波における音響異方性の測定について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "試験体の圧延方向と圧延方向に直角な方向の音響異方性を測定するために、縦波垂直探触子とグリセリンペーストを用いる。", b: "試験体の圧延方向と圧延方向に直角な方向の音響異方性を測定するために、横波垂直探触子と横波専用の接触媒質を用いる。", c: "試験体の音響異方性の測定は、二振動子垂直探触子を用いて、音響隔離板が圧延方向及びそれに直角な方向で、厚さを測定し、マイクロメータで測定した値との比較で行う。", d: "試験体の音響異方性の測定は、公称屈折角45度の斜角探触子2個を用いて、圧延方向及びそれに直角な方向で、V透過法を用いて行う。" }, answer: "b", explanation: "試験体の圧延方向と圧延方向に直角な方向の音響異方性を測定するために、横波垂直探触子と横波専用の接触媒質を用いる。" },
+            { id: 44, question: "次の文は、探傷面の粗さと超音波の伝達について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "探傷面が粗い場合、試験周波数を高くすると伝達効率が良くなる。", b: "一般に、表面の粗い試験体では伝達効率が低下する。この傾向は、保護膜を付けた探触子の方が保護膜を付けない探触子より著しくなる。", c: "探傷面が粗い場合、ギャップ水浸法を適用すると直接接触法よりもエコー高さが安定する。", d: "探傷面の粗い試験体を探傷する場合、伝達効率をよくするためには、マシン油のような音響インピーダンスの大きな接触媒質を使用する。" }, answer: "c", explanation: "探傷面が粗い場合、局部水浸法や全没水浸法を適用すれば表面の影響は小さくなり、安定したエコーが得られる。" },
+            { id: 45, question: "次の文は、超音波探傷に利用される波の種類について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "端部エコー法には、縦波がよく用いられる。", b: "溶接部の内部きずの探傷には、横波がよく用いられる。", c: "薄鋼板の介在物の探傷には、表面波がよく用いられる。", d: "鍛鋼品の垂直探傷試験には、クリーピング波がよく用いられる。" }, answer: "b", explanation: "溶接部の内部きずの探傷には、横波斜角探傷がよく用いられる。" },
+            { id: 46, question: "次の文は、広帯域超音波探触子について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "広帯域探触子から送信される超音波の周波数は、狭帯域探触子が送信する超音波の周波数より周波数帯域が広い。", b: "広帯域探触子から送信される超音波の波数は、狭帯域探触子が送信する超音波の波数より多い。", c: "送信する超音波の波数が少ない方が、周波数帯域が狭くなる。", d: "超音波探触子の周波数特性を表すQ値は、周波数帯域幅を中心周波数で除したものである。" }, answer: "a", explanation: "広帯域探触子は、1～2波振動の超音波パルスを送受信し、広い周波数帯域をもつ。" },
+            { id: 47, question: "次の文は、溶接部の超音波探傷について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "開先面に沿った融合不良は、屈折角に関係なく高いエコー高さが得られる。", b: "開先面の融合不良は、直射法で検出が困難であっても、一回反射法で検出できる場合がある。", c: "エコー高さが高くて、受信されたエコーの波形がギザギザなのは、ブローホールである。", d: "溶接部の割れのエコー高さは高いので、溶接ビードに直角に探傷すれば横割れでも十分に検出することができる。" }, answer: "b", explanation: "開先面の融合不良は、直射法で検出が困難であっても、一回反射においては直角に近い角度で入射する場合もあり、検出できることがある。" },
+            { id: 48, question: "垂直探傷できずが近距離音場内にある場合、このきずの位置が遠距離音場になるように探触子を変更したい。次のうちから正しいものを一つ選び、記号で答えよ。", choices: { a: "周波数の高い探触子を用いて遠距離音場とする。", b: "振動子直径の小さい探触子を用いて遠距離音場とする。", c: "周波数の低いかつ、振動子直径の大きい探触子を用いて遠距離音場とする。", d: "振動子直径の大きな探触子を用いて遠距離音場とする。" }, answer: "b", explanation: "近距離音場限界距離X₀＝D²/4λであるため、振動子直径を小さくし、波長を大きく（周波数を下げる）すれば近距離音場限界距離は短くなる。" },
+            { id: 49, question: "次の文は、垂直探傷における感度調整について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "底面エコー方式による感度調整は、減衰が少ない試験体にだけ適用できる。", b: "底面エコー方式による感度調整は、試験体の探傷面と底面が平行でないと適用できない。", c: "底面エコー方式による感度調整は、減衰の著しい試験体のとき、きずを過小評価する恐れがある。", d: "底面エコー方式による感度調整は、試験体の探傷面の粗さや減衰の影響を受けやすい。" }, answer: "b", explanation: "底面エコー方式による感度調整は、試験体の探傷面と底面が平行でなくては適用できないが、探傷面の粗さの影響を受けにくい。減衰の著しい試験体ではきずを過大評価するおそれがある。" },
+            { id: 50, question: "次の文は斜角探傷における屈折角について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "探傷屈折角とは、試験体又は試験体から切り出した対比試験片を用いて、探傷方向において測定した屈折角のことをいう。", b: "探傷屈折角とは、STB-A1又はSTB-A3を用いて測定した屈折角のことをいう。", c: "STB屈折角とは、試験体又は試験体から切り出した対比試験片を用いて、探傷方向と同じ方向で測定した屈折角のことをいう。", d: "STB屈折角とは、探触子の製造時に設計された公称屈折角のことをいう。" }, answer: "a", explanation: "探傷屈折角は、試験体や対比試験片を使用して探傷方向と同じ方向で測定した屈折角である。" },
+            { id: 51, question: "次の文は、透過法による超音波探傷試験について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "端部エコー法は、透過法の一種である。", b: "透過法には、二振動子垂直探触子が使用される。", c: "透過法は、送受二個の探触子を用いて探傷を行う。", d: "透過法には、斜角探触子を用いることはできない。" }, answer: "c", explanation: "透過法は、きずや試験体の組織による超音波の減衰から内部の状況を判断するもので、試験体の異なる表面で超音波を送受信することが多い。" },
+            { id: 52, question: "次の文は、各種超音波探傷法について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "表面波法では、試験周波数を高くすると、超音波ビームは低い周波数のときより探傷面から深い位置を伝搬する。", b: "TOFD法は回折波を利用している。したがって、回折波が発生しやすいように振動子寸法を大きくする必要がある。", c: "端部エコー法では通常の探触子でも十分感度を上げて探傷すれば、集束探触子と同じ程度の測定精度が得られる。", d: "一般の斜角探傷法ではきずの傾きや形状の影響を強く受けるが、TOFD法による探傷ではそれらの影響を受けにくい。" }, answer: "d", explanation: "TOFD法を適用する場合、探触子は振動子直径の小さい、広い指向角の高分解能縦波探触子が使用され、きずの形状や傾きにそれほど影響を受けない。" },
+            { id: 53, question: "次の文は、厚鋼板溶接部のタンデム探傷法について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "Ｘ開先溶接部に発生する開先面の融合不良の検出には、タンデム探傷法が適している。", b: "Ｘ開先溶接部に発生する溶込み不良の検出には、タンデム探傷法が適している。", c: "Ｘ開先溶接部に発生する裏はつり部の融合不良の検出には、タンデム探傷法が適している。", d: "Ｖ開先溶接部に発生する溶込み不良の検出には、タンデム探傷法が適している。" }, answer: "b", explanation: "タンデム探傷法はX開先溶接部の内部溶込み不良や、I開先溶接部の融合不良などの探傷面に垂直な面状きずを効果的に検出する方法である。" },
+            { id: 54, question: "次の文は、TOFD法について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "TOFD法では、縦波斜角探触子を用いて探傷を行う。", b: "TOFD法による探傷結果は、一般にCスコープ画像にて表示される。", c: "TOFD法による探傷結果は、一般にMAスコープ画像にて表示される。", d: "TOFD法で二探触子間の表面を伝搬する波は、表面波である。" }, answer: "a", explanation: "TOFD法とは、きずの検出及びきずの高さ寸法を同時に行う方法で、縦波斜角探触子を用いて探傷を行う。探触子間の表面を伝搬する波はラテラル波（縦波）である。" },
+            { id: 55, question: "次の文は、垂直探傷試験における探触子の選定方法について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "広帯域探触子を使用すると、結晶粒の大きな材料の探傷では林状エコーが多く現れる。", b: "広帯域探触子は、そのエコーに広い帯域の周波数成分を含んでいるから、DGS線図の利用に適する。", c: "厚い試験体を探傷するには、振動子の直径の小さい探触子が適している。", d: "探傷面が粗いときには、アクリル樹脂などの遅延材付きの探触子が適している。" }, answer: "d", explanation: "遅延材付探触子は粗い面での探傷の安定化を図る。遅延材と接触媒質の音響インピーダンスはほぼ等しく、表面粗さの影響を受けにくくなる。" },
+            { id: 56, question: "次の文は、超音波探傷試験における試験周波数の選定方法について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "探傷面に近いきずを検出するときは、高い周波数が適している。", b: "きずの位置決定の精度を上げるためには、低い周波数が適している。", c: "伝搬距離が長い場合は、高い周波数が適している。", d: "小さいきずを検出するためには、一般に低い周波数が適している。" }, answer: "a", explanation: "探傷面に近いきずや小さいきずの検出及びきず位置決定の精度を上げるためには高い周波数が適している。伝搬距離が長い場合は、低い周波数が適している。" },
+            { id: 57, question: "次の文は、超音波探傷試験における試験周波数の選定方法について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "薄板の探傷には、高い周波数が適している。", b: "探傷面からの距離が接近した二つのきずを分離して観察するには、低い周波数が適している。", c: "減衰の少ない試験体の底面に近いきずを検出するには、低い周波数が適している。", d: "林状エコーが探傷の支障になるときは高い周波数を使用する。" }, answer: "a", explanation: "薄板の探傷には高い周波数が適している。分解能を上げるには高い周波数が適し、林状エコーが探傷の支障になる場合は低い周波数が適している。" },
+            { id: 58, question: "次の文は、NDT指示書の記述について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "NDT指示書は、レベル1技術者が探傷条件を自由に選べるように幅広く指定するように記述する。", b: "NDT指示書は、レベル1技術者が探傷条件を誤ることがないように、具体的な探傷条件を記述する。", c: "NDT指示書は、レベル1技術者が探傷結果について、記録する項目を増やせるように空欄を多くとり、何でも書けるように記述する。", d: "NDT指示書は、レベル1技術者が探傷条件を選択できるように、数多くの探傷条件を載せたものを作成する。" }, answer: "b", explanation: "NDT指示書は、製品の検査作業を行う探傷試験技術者が、間違いなく正確に検査作業ができるように、検査工程の手順ごと、段階ごとに手順を追って記載したものである。" },
+            { id: 59, question: "次の文は、鋼板の垂直探傷における探傷感度の調整方法について述べたものである。試験体の表面が粗く感度補正が必要であると考えられる厚さ25mmの鋼板をJIS G 0801によって直接接触法で探傷する必要が生じたため、次の要領で探傷感度を調整した。1)探触子5Z20Nを使用し、STB-N1の標準穴のエコー高さが表示器上で50％の高さになるように探傷器の感度を調整したとき、ゲインの値は19dBであった。2)STB-N1の標準穴のない部分及び試験体の健全部の底面エコー高さが表示器上で50％の高さになるように探傷器の感度を調整したとき、ゲインの値はそれぞれ10dB及び25dBであった。この時、感度補正量は何dBとなるか。", choices: { a: "14dB", b: "15dB", c: "16dB", d: "17dB" }, answer: "b", explanation: "感度補正量は試験体底面25dB - STB-N1底面10dB = 15dBとなる。" },
+            { id: 60, question: "次の文は、鍛鋼品の垂直探傷について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "林状エコーが多く、底面エコーが現れない場合、探傷感度をもっと高くする。", b: "林状エコーが多く、底面エコーが現れない場合、探傷感度をもっと低くする。", c: "林状エコーが多く、底面エコーが現れない場合、試験周波数をもっと高くする。", d: "林状エコーが多く、底面エコーが現れない場合、試験周波数をもっと低くする。" }, answer: "d", explanation: "林状エコーは超音波の波長が金属の結晶粒の大きさと同程度ないしそれ以下のとき現れる。このような場合、低い周波数を適用する。" },
+            { id: 61, question: "次の文は、溶接部の斜角探傷における妨害エコーについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "溶接部の探傷では、探傷データから反射源の位置を算出し、溶接部の開先形状と寸法を考慮して、きずエコーか妨害エコーかの判断をする。", b: "斜角探傷で溶接部のビード上端部付近からのエコーが検出された。これは余盛による妨害エコーと判断するのがよい。", c: "溶接部の妨害エコーは、溶接部の形状（余盛や裏当て金など）によってモード変換を起こしたエコーである。", d: "裏はつりＴ継手溶接部では、柱材との隙間のタレ込みからの妨害エコーが発生しやすい。" }, answer: "a", explanation: "溶接部の探傷では、探傷データから反射源の位置を算出し、溶接部の開先形状と寸法を考慮して、きずエコーか妨害エコーかの判断をする。" },
+            { id: 62, question: "次の文は、溶接部の斜角探傷について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "面状の割れに対する超音波の入射角度が変わると、エコー高さは著しく変化する。", b: "X開先の溶込み不良とV開先の溶込み不良は、きずの大きさが同じならば、エコー高さはほとんど同じになる。", c: "同一探傷面から探傷すると、全ての溶接部のきずは1回反射法より直射法の方がエコー高さは高くなる。", d: "アンダーカットは、常に高いエコー高さを示す。" }, answer: "a", explanation: "きずが傾いている場合、その反射指向性によってエコー高さは影響を受ける。きずが大きく傾いている場合、探触子に戻ってくるエコーはとても小さくなる。" },
+            { id: 63, question: "次の文は、鋼溶接部の超音波探傷における試験周波数について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "JIS Z 3060で、試験周波数を2MHz～5MHzと規定しているのは、試験体板厚に応じたビーム路程ときず検出能を考慮しているためである。", b: "JIS Z 3060では、試験周波数を1MHz～10MHzまでの周波数を推奨している。", c: "溶接部の超音波探傷において、試験周波数が高いほどきずの検出能は低下し、低い周波数ほどきず検出能やきず位置の測定精度は高まる。", d: "周波数が高いほど、波長は短くなるため、きず位置の測定精度はよくなる。したがって、厚鋼板ほど高い試験周波数を選択するのがよい。" }, answer: "a", explanation: "JIS Z 3060では、探触子の公称周波数は2MHz以上5MHz以下と規定されており、試験体板厚に応じたビーム路程ときず検出能を考慮している。" },
+            { id: 64, question: "次の文は、JIS Z 3060によって鋼溶接部の探傷を行った結果である。板厚19mm鋼平板突合せ溶接部をA面から超音波探傷を行って探傷箇所①、②、③においてデータを得た。検査箇所①、②についての説明で適切なものを一つ選び、記号で答えよ。", choices: { a: "検査箇所①は余盛内部のきずである。", b: "検査箇所①はアンダーカットと推定されるので外観検査により再確認する必要がある。", c: "検査箇所①は表面開口きずであるので溶接部のきずではない。", d: "検査箇所①、②は溶接始端部からほぼ同じ位置にあるので同一きず群と判断した。" }, answer: "b", explanation: "検査箇所①の反射源位置を計算すると、A面表層余盛止端部付近となり、アンダーカットと推定される。" },
+            { id: 65, question: "次の文は、鋳鋼品を超音波探傷する場合に、注意する事柄について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "鋳鋼品には、引け巣のような強度に影響するきずが発生するので、きずの発生を予測して、垂直探傷や斜角探傷も行う必要がある。", b: "鋳鋼品は、熱処理が行われるため、減衰は小さいので、一般鋼材と同じ周波数で探傷が可能である。", c: "鋳鋼品は、結晶粒が小さく、減衰も小さいので、一般鋼材と同じ周波数で探傷が可能である。", d: "鋳鋼品は、表面が機械加工されるので、表面粗さを考慮しなくてよい。" }, answer: "a", explanation: "鋳鋼品は収縮率が大きく鋳込み温度が高く、鋳造欠陥が出やすい。そのため、きずの発生を予測して、垂直探傷や斜角探傷を行う必要がある。" },
+            { id: 66, question: "次の文は、鋼板の垂直探傷における積算効果について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "積算効果は、板厚が30mm以下の鋼板の探傷で、ラミネーションがある場合によく検出される。", b: "積算効果が現れた場合、きずの評価は特に指定がないかぎり、Ｆ１で行なう。", c: "積算効果が現れた場合、きずの評価は特に指定がないかぎり、Ｆエコー高さの最大のところ（例えばＦ４、Ｆ５）で行なう。", d: "積算効果は残留エコーの一種である。" }, answer: "b", explanation: "積算効果とは、きずが小さい場合に、きずエコーが一回目より、二回目、三回目と高くなる現象。きずの評価は、特に指定がないかぎり、Ｆ１で行なう。" },
+            { id: 67, question: "次の文は、アルミニウム溶接部の斜角探傷について述べたものである。アルミニウム合金中の縦波音速を6,380m/s、横波音速を3,150m/sとする。測定範囲の調整及び屈折角の測定はSTB-A1（縦波音速5,900m/s、横波音速3,230m/s）を用いて行い、特に補正を加えていない。5Z10×10A70（STB屈折角69.5度）を用いて探傷する場合、この探触子のアルミニウム合金中の屈折角は何度となるか。", choices: { a: "30.0度", b: "66.0度", c: "69.5度", d: "73.8度" }, answer: "b", explanation: "θAL＝sin⁻¹{(CAL/CFe)×sin69.5°}＝sin⁻¹{(3150/3230)×sin69.5°}＝66.0°" },
+            { id: 68, question: "次の文は、超音波探触子の振動子に用いられる圧電素子の特徴及び用途について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "水晶は、温度変化が少なく変換効率も高いので斜角探触子に使用される。", b: "ジルコンチタン酸鉛は、変換効率が高いので高感度の探触子として使用される。", c: "硫酸リチウムは、機械的なダンピングが掛けにくいので低い周波数の探触子として使用される。", d: "ニオブ酸リチウムは、低い周波数の探触子や広帯域探触子に使用される。" }, answer: "b", explanation: "ジルコンチタン酸鉛は変換効率が最もよく、コンポジット型にすることで高感度で良好な分解能の探触子が製作できる。" },
+            { id: 69, question: "次の文は、超音波探触子について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "斜角探触子は、くさびの温度が変化しても屈折角が変わらないように作られている。", b: "一般の斜角探触子の振動子は、横波を発生する。", c: "可変角探触子で入射角を変えると、試験体中に縦波を斜めに伝搬させることができる。", d: "探触子の吸音材は、分解能をよくするために付けている。" }, answer: "c", explanation: "可変角探触子は、入射角を可変できる構造で、設定する入射角により、通常の横波斜角、表面波、縦波斜角、クリーピング探触子として使用できる。" },
+            { id: 70, question: "次の文は、広帯域探触子について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "広帯域探触子は、組織の粗い材料の探傷には使用できない。", b: "広帯域探触子は、ＤＧＳ線図を用いた探傷に最も適している。", c: "広帯域探触子は、周波数帯域の広い装置を使用した方がよい。", d: "広帯域探触子は、専用の接触媒質を使用しなければならない。" }, answer: "c", explanation: "広帯域探触子は組織の粗い試験体に用いてＳＮ比の向上が期待できる。種々の周波数成分を含んでいるからDGS線図の利用には適さない。グリセリンなど通常の接触媒質が使用できる。" },
+            { id: 71, question: "次の文は、遅延材付き超音波探触子について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "遅延材付きの垂直探触子では、遅延材内での多重反射エコーが現われるので、遅延材の長さにより探傷できる範囲が制限される。", b: "遅延材付きの探触子は、主として水浸探傷において有効な性能を発揮する。", c: "遅延材付きの材質がアクリル樹脂（CL:2730m/s）の探触子を用いて鋼の試験体を探傷する場合、遅延材の長さは最低でも鋼の板厚の約1/3程度の長さを必要とする。", d: "遅延材の材質として、アクリル樹脂よりもピエゾ効果のあるセラミックスを用いた方が超音波の伝搬特性が向上する。" }, answer: "a", explanation: "遅延材付き垂直探触子は、遅延材内での多重反射が現われるので、遅延材の長さにより探傷できる範囲が限られる。" },
+            { id: 72, question: "次の文は、二振動子垂直探触子の特性について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "二振動子垂直探触子を用いて、きずをＦ/ＢＦで評価することができる。", b: "厚鋼板の探傷に用いられる二振動子垂直探触子は、鋼板の厚さが6mmから40mmの間で変化しても、第1回目の底面エコー高さはほとんど変化しない。", c: "二振動子垂直探触子は、その特性から試験体の表面近くのきずの検出が可能である。", d: "二振動子垂直探触子は、ＳＮ比が高いため、交束範囲に関係なく、板厚が薄くても厚くても探傷が可能である。" }, answer: "c", explanation: "二振動子探触子は、送受信振動子には若干の角度がつけられており、表面直下のきず検出や、厚さ測定用として使用される。" },
+            { id: 73, question: "次の文は、斜角探触子について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "斜角探触子の接触面が磨耗した場合は、薄いアクリル樹脂板を貼り付けて、再使用することができる。", b: "斜角探触子の接触面がどのように磨耗しても、屈折角は変化しない。", c: "斜角探触子の振動子は、縦波の他に横波も同程度の強さで発生する。", d: "斜角探触子は、くさびの温度が上がると屈折角が小さくなる。" }, answer: "a", explanation: "斜角探触子の接触面が磨耗した場合は、薄いアクリル樹脂板を貼り付けて、再使用することができる。不均一な摩耗をすると屈折角は変化する。" },
+            { id: 74, question: "次の文は、くさび材料のポリスチレンを用いた斜角探触子について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "摩耗によって磨き減ったクサビはアクリル樹脂板を貼り替えて再生することは、規格で認められている。", b: "摩耗によって磨き減ったクサビを貼り替える場合、アクリル樹脂板が最適である。", c: "摩耗によって磨き減ったクサビを貼り替える場合、超音波の伝達特性を考慮すると、元のクサビの材質と同じ樹脂板が最適である。", d: "摩耗によって磨き減ったクサビを再生する場合、元の材質にかかわらず超音波が伝達するものであればどのような樹脂でも使用できる。" }, answer: "c", explanation: "摩耗したくさびの貼り替えは認められているが、同じ材質に限られている。ポリスチレンのくさびには同じポリスチレンを使用する。" },
+            { id: 75, question: "次の文は、二振動子垂直探触子について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "送信用振動子と、受信用振動子との音響結合を遮断するために設置されているものを振動分割材という。", b: "送信用振動子と、受信用振動子との音響結合を遮断するために設置されているものを振動隔離材という。", c: "送信用振動子と、受信用振動子との音響結合を遮断するために設置されているものを音響隔離面という。", d: "送信用振動子と、受信用振動子との音響結合を遮断するために設置されているものを音響分割面という。" }, answer: "c", explanation: "二振動子探触子は、送信と受信を完全に隔離する音響隔離面があり、1つのハウジングに収めた形式の探触子である。" },
+            { id: 76, question: "次の文は、フェーズドアレイ探触子について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "フェーズドアレイ探触子は、一枚の大きな振動子で製作されている。", b: "フェーズドアレイ探触子は、複数の振動子を三次元的な配列にして制作されている。", c: "フェーズドアレイ探触子は、個々の振動子に電圧を印加する順番を電子的に調整することで、斜めに超音波を伝搬させることができる。", d: "フェーズドアレイ探触子は、個々の振動子に電圧を印加する順序は常に一定の順序である。" }, answer: "c", explanation: "アレイ探触子は、多くの小さい振動子からなり、各々の振動子に励起信号を印加するタイミングを電気的に制御して、超音波を集束させたり、斜めに伝搬させたりする。" },
+            { id: 77, question: "次の文は、探触子ケーブルについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "超音波探傷に用いる探触子ケーブルには、同軸ケーブルが用いられている。内部導体と外部導体及び絶縁体と被覆で構成されているため、曲げ変形には強い構造となっている。", b: "探触子ケーブルは作業性を重視し、柔らかく耐久性のあるものを選択するのがよい。", c: "現場の探傷作業において、接栓形状の異なる探触子を使用する場合、複数の変換コネクタを用意しておくと、一本の探触子ケーブルで間に合わせることができる。", d: "探触子ケーブルは、安全性を重視し、太くて曲がりにくいものを選択する。" }, answer: "b", explanation: "探触子ケーブルには同軸ケーブルが使用されている。一般的な電灯線ほど丈夫でないため、柔らかく耐久性のあるものを選択するのがよい。" },
+            { id: 78, question: "次の文は、デジタル探傷器について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "デジタル探傷器は、探触子ごとのエコー高さ区分線を一度作成しておけば、長時間にわたってエコー高さ区分線を使用することができる。", b: "デジタル探傷器に接続した探触子は、探傷前に入射点、屈折角を調整しておけば使用中の探触子の変化は自動的に補正される。", c: "デジタル探傷器では、探触子の走査速度を早くすると探傷データを数値として記憶するため、そのサンプリングを細かくしないとエコーの最大値が真の値と異なる場合がある。", d: "デジタル探傷器はメモリ機能が優れているので、アナログ探傷器に比べて電池の消耗が著しい。" }, answer: "c", explanation: "デジタル探傷器は、サンプリングの頻度（周波数）が多いと再現表示される波形は受信した波形に近くなり、サンプリング頻度が少ないと本来の最大値を表示できない場合がある。" },
+            { id: 79, question: "次の文は、デジタル探傷器について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "一度保存したエコー高さ区分線を、異なる屈折角の探触子でも再び呼び出して使用することができる。", b: "斜角探触子の屈折角及び板厚を入力しておくと、斜角演算機能により、きずの深さ位置及び探触子きず距離を表示できる。", c: "デジタル探傷器は、探傷結果の電気的な読取りが速い。そのため、走査速度はアナログ探傷器よりもかなり速くできる。", d: "デジタル探傷器は、送信信号もデジタル化されている。" }, answer: "b", explanation: "デジタル探傷器は探傷器の設定の記憶、ビーム路程の数値表示、斜角探傷における反射源の深さや反射源－探触子距離の表示ができる。" },
+            { id: 80, question: "次の文は、デジタル探傷器を用いた作業について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "デジタル探傷器では、ゲート内に現れたエコーの位置を表示する機能が備わっている。このため、ゲートの起点はビーム路程零点付近から測定範囲の最大値まで設定しておくと作業能率が向上する。", b: "デジタル探傷器では、音速値を設定すれば、測定範囲の調整ができる。", c: "デジタル探傷器では、各種の探傷に適切なゲート位置、ゲート幅を調整する必要がある。", d: "デジタル探傷器では、一度標準試験片で測定した入射点、屈折角及び作成したエコー高さ区分線を記憶しておけば、探傷現場に標準試験片を持参して調整しなくても探傷可能である。" }, answer: "c", explanation: "デジタル探傷器では、設定したゲート内に着目するエコーのみにゲートがかかるようにゲートの幅、位置などを調整する必要がある。" },
+            { id: 81, question: "次の文は、Ａ，Ｂ及びＣスコープ表示について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "Ａスコープとは、横軸に時間の経過をとり、縦軸に信号の大きさを表示する基本表示のことである。", b: "Ｂスコープとは、横軸に時間の経過をとり、縦軸に信号の大きさを表示する基本表示のことである。", c: "Ｃスコープとは、試験体の断面におけるきずの分布状態を表す断面表示のことである。", d: "Ｃスコープとは、きずの分布状態を立体表示することである。" }, answer: "a", explanation: "Ａスコープは基本表示、Ｂスコープは断面表示、Ｃスコープは平面表示である。" },
+            { id: 82, question: "次の文は、超音波探傷器のパルス繰返し周波数について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "パルス繰返し周波数を高くすると、林状エコーが生じやすくなる。", b: "パルス繰返し周波数を高くすると、遅れエコーが生じやすい。", c: "パルス繰返し周波数を高くすると、残留エコーが生じやすい。", d: "パルス繰返し周波数を高くすると、自動探傷速度を速くできない。" }, answer: "c", explanation: "残留エコーとはパルス反射法において試験体中のエコーが次のパルスが送信された後も残っているため、受信されて探傷図形に現れるエコーをいう。減衰の少ない材料を探傷する場合、パルス繰返し周波数が高いと、一つ前のパルスが残ってしまい、残留エコーとして現れる。" },
+            { id: 83, question: "次の文は、接触媒質について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "探傷面が粗いときは粘性の低いスピンドル油を用いた方が、超音波の伝達がよくなる。", b: "曲率を有する部材や試験材が鉛直に近い配置で探傷する場合、接触媒質はグリセリンペーストよりも水の方が適している。", c: "標準試験片のような平滑な材料では、接触媒質にマシン油、グリセリン、水を適用した場合、接触媒質の種類によるエコー高さはあまり変わらない。", d: "接触媒質では水は安価でいつでも入手可能であるため、建築鉄骨の現場溶接部の探傷でも用いられることが多い。" }, answer: "c", explanation: "表面が平滑な場合、エコー高さの変化がないため正しい。ただし、標準試験片は基準となる試験片のため、原則マシン油を用いる。" },
+            { id: 84, question: "次の文は、超音波斜角探傷におけるRB-41Aの人工きずを加工及び使用するときの注意点を挙げたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "人工きずの角部分は、面取りを行い平滑にする。", b: "横穴の探傷面との平行度及び円柱面の仕上げ状態は、探傷感度の調整に影響しない。", c: "人工きずの長さは、振動子の幅より十分に大きくすること。", d: "振動子幅と同程度の幅が狭い対比試験片であっても、使用するビーム路程や探触子周波数に関係なく使用できる。" }, answer: "c", explanation: "対比試験片の幅は振動子幅よりも十分大きいものでなければならない。振動子幅と同程度の狭い試験片は使用できない。" },
+            { id: 85, question: "次の文は、ＮＤＴ手順書について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "ＮＤＴ手順書は、レベル３技術者により作成されたものでなければならない。", b: "ＮＤＴ手順書の内容で、現場での対応が難しい場合、レベル２技術者は自分の判断で変更することができる。", c: "詳細なＮＤＴ指示書があれば、ＮＤＴ手順書はなくてもよい。", d: "探傷現場で、探傷方法について購入者が変更を要求してきた場合、検査技術者がレベル２技術者であれば、その要求どおりに変更することができる。" }, answer: "a", explanation: "NDT手順書はレベル3技術者によって作成し、発行されなければならない。この文書は使用前に発注者（顧客）に提出し、承認を得る必要がある。" },
+            { id: 86, question: "次の文は、NDT手順書について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "NDT手順書は、レベル2技術者により準備され、承認されていなければならない。", b: "NDT手順書は、使用前に顧客に提出し、承認を得てから使用するのが一般的である。", c: "NDT手順書に記載されている内容に変更の必要が生じた場合、現場でレベル2技術者が修正することができる。", d: "NDT手順書は、探傷現場で顧客が探傷方法について変更を求めた場合、レベル2技術者が修正、標準化を図ることができる。" }, answer: "b", explanation: "NDT手順書は、使用前に顧客に提出し、承認を得てから使用するのが一般的である。" },
+            { id: 87, question: "次の文は、ＮＤＴ指示書について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "NDT指示書は、レベル3の資格者が作成しなければならない。", b: "NDT指示書は、作業別に必ず準備しなくてはいけない文書である。", c: "NDT指示書は、作成にあたって購入者の承認を得なければならない。", d: "NDT指示書は、購入者から提示を求められた場合、参考として開示しなければならない。" }, answer: "d", explanation: "NDT指示書はレベル2以上の技術者によって作成されるが、必ず準備しなければならない文書ではなく、必要に応じて準備する文書である。提示を求められれば参考として開示する文書である。" },
+            { id: 88, question: "次の文は、板材を超音波探傷する際のきずエコーの発生予測について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "板材は圧延されるので、圧延方向に伸びたきずが板厚の表面に発生することが多い。", b: "板材は、熱間状態から冷却されるときに収縮によるパイプ状きずが板厚の中央付近に発生することが多い。", c: "板材は、熱間状態から冷却されるときに収縮によるブローホール状きずが板厚の中央付近に発生することが多い。", d: "板材は圧延されるので、圧延方向に伸びた平面状のきずが板厚の中央付近に発生することが多い。" }, answer: "d", explanation: "鋼板のきずは圧延によって長手方向（圧延方向）に延ばされ、鋼板表面に平行で細長くなっているので、板厚方向の垂直探傷が行われる。" },
+            { id: 89, question: "次の文は、鍛鋼品に発生するきずの特徴について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "偏析きずは、軸状の試験体では、軸方向からの探傷でよく検出される。", b: "ざくきずは、鍛鋼品のほぼ中心付近に集中して検出され、大きいきずの場合、底面エコーの低下が著しい。", c: "粗大結晶粒による林状エコーは、軸状の試験体では中心付近に群立する。", d: "偏析きずは、軸状の試験体では、円周方向の探傷で、検出されない。" }, answer: "b", explanation: "ざくきずは、ほぼ中心付近に集中してきずエコーが検出され、きずが大きい場合は、底面エコーの低下が著しい。" },
+            { id: 90, question: "次の文は、板厚が20mm程度の鋼板の突合せ溶接部に発生するきずについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "多電極により溶接するサブマージアーク溶接では、層間に融合不良が発生しやすい。", b: "サブマージアーク溶接は、溶接前にフラックスを散布するので、開先部が濡れるなどしていてもフラックスで吸収するためブローホールなどのきずは発生しにくい。", c: "CO２半自動溶接を行う溶接部は、風が強い場合などにシールドガスが飛散し、ブローホールなどが発生しやすい。", d: "Ｘ開先でCO２半自動溶接を行う場合、表面の溶接を行った後、裏面側の１層目は特にガウジングなどをしなくとも溶込みは十分得られるので、溶込み不良などのきずは発生しにくい。" }, answer: "c", explanation: "現場溶接の場合、アーク近傍に強風が流れた場合、シールドガスを乱し、大気を巻き込むことによりブローホールが発生する。" },
+            { id: 91, question: "次の文は、板厚25mm程度の鋼板の、X開先溶接部におけるきずの発生の要因について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "サブマージアーク溶接の場合、フラックス中に水分が存在する場合、アンダーカットが発生しやすい。", b: "CO２半自動溶接の場合、風の影響でCO２ガスのシールドが完全でない場合、割れを発生しやすい。", c: "CO２半自動溶接で多層盛の場合、層間のスラグを良く除去しないと溶込み不良やブローホールが発生しやすい。", d: "被覆アーク溶接で多層盛の場合、表面側の溶接後、裏面側の溶接を行う場合、裏面側開先部のガウジングを十分行わないと内部の溶込み不良が発生しやすい。" }, answer: "d", explanation: "被覆アーク溶接で多層盛の場合、表面側の溶接後、裏面側の溶接を行う場合、裏面側開先部のガウジングを十分行わないと内部の溶込み不良が発生しやすい。" },
+            { id: 92, question: "次の文は、JIS Z 3060に基づく鋼溶接部の探傷における探傷範囲の選定について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "突合せ継手で片面両側から探傷を行う場合、探傷範囲は、直射法及び一回反射法の範囲である。", b: "突合せ継手で両面両側から探傷を行う場合、探傷範囲は、直射法及び一回反射法の範囲である。", c: "T継手で両面片側から探傷を行う場合、探傷範囲は、直射法及び一回反射法の範囲である。", d: "角継手で片面片側から探傷を行う場合、探傷範囲は、直射法の範囲である。" }, answer: "a", explanation: "JIS Z 3060付属書Bでは、突合継手片面両側の探傷は直射法及び一回反射法、突合継手両面両側の探傷は直射法と規定している。" },
+            { id: 93, question: "次の文はJIS G 0801について述べたものである。［１］に適する語句を一つ選び、記号で答えよ。JIS G 0801の適用範囲は、原子炉、[１]、圧力容器などに使用する厚さ6mm以上、300mm以下の炭素鋼又は合金鋼（但し、ステンレス鋼を除く）の鋼板に対する自動又は手動による超音波探傷検査方法について規定している。", choices: { a: "建築", b: "橋梁", c: "ボイラ", d: "船舶" }, answer: "c", explanation: "JIS G 0801の適用範囲は、原子炉、ボイラ、圧力容器などに使用する鋼板に対する超音波探傷検査方法について規定している。" },
+            { id: 94, question: "次の文は、JIS Z 3060について述べたものである。〔1〕に適する語句を一つ選び、記号で答えよ。JIS Z 3060の適用範囲は、厚さ〔1〕mm以上のフェライト系鋼の完全溶込み溶接部に対して、パルス反射法によるAスコープ表示の探傷器を使用して、手動で行う超音波探傷試験方法について規定している。", choices: { a: "6", b: "9", c: "13", d: "19" }, answer: "a", explanation: "JIS Z 3060の適用範囲は、厚さ6mm以上のフェライト系鋼の完全溶込み溶接部に対して規定している。" },
+            { id: 95, question: "次の文は、圧力容器用鋼板の超音波探傷について述べたものである。厚さ30mmの圧力容器用鋼板を探触子5C20Nを使用してJIS G 0801によって探傷した。探傷感度は、STB-N1の標準穴のエコー高さを50%に調整した。この鋼板の探傷面は粗く、STB-N1と比べて伝達効率等が10dB低い。この鋼板を、伝達効率の補正を行わずに探傷したとき、エコー高さ(F1)が40％のきずが検出されたとする。この場合、このきずを〔１〕であると誤って判断することになる。", choices: { a: "重きず", b: "中きず", c: "軽きず", d: "検出の必要がないきず" }, answer: "c", explanation: "補正をする前では40%のエコー高さは軽きずと判断されるが、補正感度10dBを加えた条件で探傷を行うと約120％となり重きずと評価される。" },
+            { id: 96, question: "次の文は、JIS Z 3060によりSTB-A2形系のφ4mm、深さ4mmの標準穴を用いて感度調整する場合について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "屈折角45度の探触子を使用する場合は、H線に探傷感度を合わせて探傷を行う。", b: "屈折角65度の探触子を使用する場合は、H線に探傷感度を合わせて探傷を行う。", c: "屈折角70度の探触子を使用する場合は、H線に探傷感度を合わせて探傷を行う。", d: "屈折角60度の探触子を使用する場合は、M線に探傷感度を合わせて探傷を行う。" }, answer: "c", explanation: "公称屈折角70度を使用する場合は、標準穴のエコー高さをH線に合わせて必要に応じて感度補正を加えて、探傷感度とする。" },
+            { id: 97, question: "次の文は、JIS G 0801に基づく垂直探傷のきず分類に関する規定について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "エコー高さが100%のきずは、中きずで、表示記号は△となる。", b: "エコー高さが50%のきずは、中きずで、表示記号は△となる。", c: "エコー高さが25%のきずは、軽きずで、表示記号は〇となる。", d: "エコー高さが49%のきずは、中きずで、表示記号は△となる。" }, answer: "a", explanation: "軽きず：25%＜F１≦50%（表示記号〇）、中きず：50%＜F１≦100%（表示記号△）、重きず：F１＞100%（表示記号×）" },
+            { id: 98, question: "次の文は、JIS Z 3060に基づく鋼溶接部の斜角探傷における探傷感度の調整について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "探触子の屈折角70度を使用する場合、RB-41Aの標準穴のエコー高さをＨ線に調整する。", b: "探触子の屈折角65度を使用する場合、RB-41Aの標準穴のエコー高さをＭ線に調整する。", c: "探触子の屈折角70度を使用する場合で、RB-41Bを用いる場合、標準穴のエコー高さをＨ線に調整した後、感度補正量が3dBを超える場合には感度補正を行う。", d: "探触子の屈折角70度を使用し、使用する最大のビーム路程が200mmの場合で、STB-A2を用いる場合、φ4mm、深さ4mmの標準穴のエコー高さをＨ線に調整した後、感度補正量が4dBを超える場合には感度補正を行う。" }, answer: "a", explanation: "RB-41Aによる場合、標準穴のエコー高さが、H線に一致するようゲインを調整し、探傷感度とする。" },
+            { id: 99, question: "次の文は、JIS Z 3060に記載されているRB-41Aについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "RB-41Aを用いてエコー高さ区分線を作成する場合、基準となる反射源に探触子を正対させるには、探触子を試験片の側面に沿わせて前後走査させるとよい。", b: "RB-41Aは自作が可能で、直径3.2mmの横穴を加工する。", c: "RB-41Aは、探傷面を標準試験片のように平滑な面仕上げにする。", d: "RB-41Aは、試験体と同等の音響特性の鋼材、探傷面の状態で、曲率をもたないものとする。" }, answer: "d", explanation: "JIS Z 3060でRB-41Aは、『試験体と同等の音響特性の鋼材、探傷面の状態で、曲率をもたないものとする。試験体との音速差は±2%以内、感度補正量の差が±2dB以内とする。』と規定されている。" },
+            { id: 100, question: "次の文は、斜角探傷における超音波探傷器の探傷図形について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "鋼溶接部の斜角探傷試験において、ゲート範囲は測定範囲全体に掛けておくと、作業効率を上げることができる。", b: "探傷の際、表示器の表示モードは常時ＭＡ波形表示に設定しておいた方が、きずの最大エコーを正しく測定することができる。", c: "デジタル探傷器を用いて斜角探傷を行う場合、あらかじめ探傷装置に屈折角と板厚の数値を入力しておけば、きず位置は画面表示されるので、探傷作業中は、きずの位置の表示部だけを監視する。", d: "デジタル探傷器を用いて斜角探傷を行う場合、ビーム路程の読み取りはゲートで捉えられたエコーについて、表示部に示された数値を読み取るのがよい。" }, answer: "d", explanation: "エコー高さについては、多くはゲート内の最大高さを検出してエコー高さを表示する。したがって設定したゲート内に着目するエコーより高いエコーがある場合、着目するエコーのみにゲートが掛かるようにゲート幅、位置などを調整する必要がある。" },
+            { id: 101, question: "次の文は、斜角探触子（5Z10×10A45、5Z10×10A60、5Z10×10A70）を用いた場合の鋼のコーナーエコーの反射率について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "反射率が高い順から並べると、７０度、６０度、４５度となる。", b: "反射率が高い順から並べると、６０度、７０度、４５度となる。", c: "反射率は、いずれも同じである。", d: "反射率が最も低いのは、６０度である。" }, answer: "d", explanation: "コーナーエコーでの反射率は、高い順から並べると、45度、70度、60度の順となる。（45度は全反射、70度は約50%、60度は13%の反射率）" },
+            { id: 102, question: "次の文は、Ｋ走査探傷法について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "Ｋ走査探傷法とは、鋼材溶接部のブローホールの検出を目的とした探傷法である。", b: "Ｋ走査探傷法とは、鉄筋圧接部の不完全接合部の検出に用いる探傷法である。", c: "Ｋ走査探傷法とは、探触子を向かい合わせた状態で探傷する方法である。", d: "Ｋ走査探傷法とは、角継手の溶込み幅の測定に有効な探傷法である。" }, answer: "b", explanation: "K走査探傷法とは、鉄筋圧接部の不完全接合部を検出する探傷法である。送信側探触子から発信された超音波が不完全接合部で反射され受信側探触子に受信される超音波の経路が英字のKに似ている所から、この探傷法をK走査探傷法と呼ぶ。" },
+            { id: 103, question: "次の文は、両面平行な鋼板を局部水浸法によって垂直探傷した結果について述べたものである。水距離を鋼板の厚さの1/3にして探傷したものであり、鋼板の縦波音速を5920m/s、横波音速を3230m/s、水の縦波音速を1480m/sとする。試験体の厚さは約何mmか。", choices: { a: "20", b: "40", c: "60", d: "80" }, answer: "c", explanation: "局部水浸法の探傷図形で、S1のビーム路程80mmは鋼で調整したビーム路程なので水の縦波音速に変換すると、80×1480/5920=20mmとなり、これが水距離である。試験体の厚さはB1－S1で、ビーム路程140-80=60mm（水距離の3倍）となる。" },
+            { id: 104, question: "次の文は、垂直探傷におけるＳＴＢを用いた感度調整について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "試験片方式による感度調整は、減衰が少ない試験体にだけ適用できる。", b: "試験片方式による感度調整は、試験体の探傷面と底面が平行でないと適用できない。", c: "試験片方式による感度調整は、減衰の著しい試験体のとき、きずを過小評価する恐れがある。", d: "試験片方式による感度調整は、試験体の探傷面の粗さの影響を受けにくい。" }, answer: "c", explanation: "試験片方式の主な特徴：①試験片方式では試験面の粗さ、試験体の減衰の影響を受ける。②探傷面と底面は平行でなくてもよい。③減衰の大きな試験体では過小評価する。" },
+            { id: 105, question: "次の文は、減衰のある鍛鋼品の垂直探傷における感度調整について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "底面エコー方式の感度調整による探傷では、試験片方式による感度調整よりも、きずを小さめに評価する傾向がある。", b: "底面エコー方式の感度調整による探傷では、試験片方式による感度調整よりも、きずを大きめに評価する傾向がある。", c: "底面エコー方式の感度調整による探傷では、減衰の影響を受けないで、きずを評価することができる。", d: "底面エコー方式の感度調整による探傷では、減衰量を特に補正しなくても、きずを評価することができる。" }, answer: "b", explanation: "底面エコー方式による感度調整では、減衰の大きな試験体では、試験片方式による感度調整よりも、過大評価する傾向がある。" },
+            { id: 106, question: "次の文は、垂直探傷における感度調整について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "底面エコー方式による感度調整では、試験体の減衰が大きい場合、きずを過小評価する傾向にある。", b: "試験片方式による感度調整では、試験体の減衰が大きい場合、きずを過大評価する恐れがある。", c: "底面エコー方式による感度調整は、試験体の探傷面の粗さの影響を受けにくい。", d: "試験片方式による感度調整は、試験体の探傷面の粗さの影響を受けにくい。" }, answer: "c", explanation: "底面エコー方式による感度調整では、きずを過大評価する傾向がある。試験片方式による感度調整では、きずを過小評価する恐れがあり、また試験体の表面粗さの影響を受けやすい。" },
+            { id: 107, question: "次の文は、超音波探傷における感度調整について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "標準試験片や対比試験片に加工されている標準穴は、決められた形状・寸法の穴であり、超音波探傷器の感度調整などを行うとき標準反射源として用いる。", b: "対比試験片に加工されている標準穴は、任意の穴径に加工することができる。", c: "試験片方式の感度調整では、きず部の底面エコーを基準としている。", d: "底面エコー方式の感度調整では、きずエコーが最大になった時のきず部の底面エコーを基準としている。" }, answer: "a", explanation: "標準試験片は、JIS規格によって定められた試験片で、形状寸法や標準穴の寸法が定められている。対比試験片も、形状や穴径はJISに規定されている。" },
+            { id: 108, question: "次の文は、斜角探傷におけるエコー高さ区分線の作成について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "表示器に描いたエコー高さ区分線は、探触子の購入時に描いたものが、そのまま使用できる。", b: "周波数、振動子サイズ、屈折角が同じ探触子で同一の探傷器に接続して用いる場合に限り、ゼロ点補正だけを行えば、エコー高さ区分線は共通に使用可能である。", c: "RB-41Aを用いて作成したエコー高さ区分線を使用して試験体の探傷を行う場合は感度補正の必要はない。", d: "エコー高さ区分線は、0.5S及び1Sの範囲は精度よく描かなければならないが、1.5S以上の範囲ではあまり使用されないため精度は要求されない。" }, answer: "c", explanation: "RB-41Aは、試験体と同等の音響特性（試験体との音速差±2%以内、感度補正量の差が±2dB以内）の鋼材及び探傷面の状態で曲率をもたないことが要求されているため、感度補正は必要としない。" },
+            { id: 109, question: "次の文は、ＤＧＳ線図の利用について述べたものである。2C20Nの探触子を用いて、厚さ200mmの鋼製試験体を垂直探傷した。探傷感度は試験片方式でSTB-G V8のエコー高さを50%に調整した。ビーム路程150mmの位置でエコー高さ96%のきずを検出した。このきずを超音波ビームに垂直な円形平面きずとして、その直径をDGS線図を使用して求めると何mmとなるか。", choices: { a: "2.1", b: "3.0", c: "3.5", d: "5.0" }, answer: "d", explanation: "STB-G V8の標準穴は探傷面から80mmで、その標準穴の直径は2mm。80mmの深さにある直径2mmの相対エコー高さは、DGS線図より-36.5dB。きずの相対エコー高さは-36.5+5.7=-30.8dBとなり、きずの深さ150mmに対する等価きず直径を読むと、5.0mmとなる。" },
+            { id: 110, question: "次の文は、ＤＧＳ線図について述べたものである。周波数5MHz、振動子直径20mmの探触子を用いて、ある鋼製試験体を垂直探傷した。探傷面から90mmの位置にSTB-G V15シリーズの標準きずのエコー高さより、8dB高いきずエコーを検出した。このきずを超音波ビームに垂直な円形平面きずとしてその直径をＤＧＳ線図から測定したところ、直径3.6mmと推定できた。このとき使用した標準試験片の種類はどれか。", choices: { a: "STB-G V15-1.4", b: "STB-G V15-2", c: "STB-G V15-2.8", d: "STB-G V15-4" }, answer: "c", explanation: "きずの相対エコー高さはDGS線図より-20dBと読める。よって標準試験片の標準きずエコーは-20dB-8dB=-28dBであり、標準きずの位置150mmと相対エコー高さ-28dBをDGS線図で等価きず直径を読むと、2.8mmと読める。よってSTB-G V15-2.8が使用した標準試験片である。" },
+            { id: 111, question: "次の文は、DGS線図を用いて等価きず直径を推定する方法について述べたものである。DGS線図を用いて等価きず直径を推定する場合、基準としてSTB-Gの円形平面きずを用いる場合のほか、どのような方法があるか。", choices: { a: "STB-A2 φ4mm、深さ4mmの縦穴を基準とする。", b: "RB-41Aに規定する横穴を基準とする。", c: "試験体の健全部の底面エコーを基準とする。", d: "STB-N1 φ5.6mmの円形平面きずを基準とする。" }, answer: "c", explanation: "DGS線図を用いて等価きず直径を推定する方法としては、STB-Gの円形平面きず用いる試験片方式の他に、試験体健全部の底面エコーを基準にする底面エコー方式を用いる場合がある。" },
+            { id: 112, question: "次の文は、エコー高さの評価について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "F/BFとは、きずエコー高さときずエコーが最大となる位置での底面エコー高さとの比で、きずの大きさにかかわらず材料の減衰値が一定であれば常に一定の値になる。", b: "F/BGを用いる場合、健全部の底面エコー高さで感度調整すれば、同材質、同一形状の試験体について同一感度で探傷できる。", c: "F/BGは、きずエコー高さと健全部の底面エコー高さとの比であるが、探傷面の粗さが変化してもFエコー高さもBGエコー高さも変わらない。", d: "探傷面の粗さにかかわらず接触媒質の種類によるエコー高さへの影響はない。" }, answer: "b", explanation: "F/BG（エフ・バイ・ビージー）：健全部のB1に対するきずエコーの大きさ。特徴：①探傷面の影響を受ける。②同一材質、同一形状の試験体の場合、作業性がよい。③大きなきずが傾いている場合、過小評価になる。" },
+            { id: 113, question: "次の文は、超音波探傷におけるきず高さの測定について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "きず高さは、垂直探傷試験で容易に測定することができる。", b: "きず高さは、探傷面からのきず上端部までの寸法である。", c: "きず高さは、TOFD法や端部エコー法で測定することができる。", d: "きず高さは、V透過法で測定することができる。" }, answer: "c", explanation: "きず高さの測定方法には、端部エコー法、表面波法及びTOFD法などがある。" },
+            { id: 114, question: "板厚19mmの鋼突合せ溶接部を5Z10×10A70を用いて、STB-A2により探傷感度を調整し、検出レベルをM検出レベルに選定して斜角探傷した。その結果ビーム路程が59mmの位置にエコー高さが80％のきずエコーが検出された。きずの指示長さはいくらになるか。", choices: { a: "23", b: "28", c: "33", d: "60" }, answer: "c", explanation: "JIS Z 3060ではM検出レベルでも、きずの指示長さ測定はL線を超える探触子の移動範囲と定められている。L線を超える範囲から指示長さは33mmとなる。" },
+            { id: 115, question: "板厚19mmの鋼突合せ溶接部を5Z10×10A70を用いて、STB-A2により探傷感度を調整し、検出レベルをL検出レベルに選定して斜角探傷した。その結果ビーム路程が75mmの位置にエコー高さが70％のきずエコーが検出された。この場合きずの指示長さはいくらになるか。", choices: { a: "40", b: "52", c: "55", d: "63" }, answer: "d", explanation: "L線との交点は13％と読むことができる。L線を超える範囲を読み取ると107mmから170mmの範囲となり、きずの指示長さは63mmとなる。" },
+            { id: 116, question: "次の文は、超音波探傷試験における林状エコーについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "林状エコーは、試験体中の結晶粒界による超音波の散乱によって生じる。", b: "広帯域探触子を使うと、林状エコーが高くなる。", c: "試験周波数を高めると、林状エコーが低くなる。", d: "パルス繰返し周波数を高めると、林状エコーが低くなる。" }, answer: "a", explanation: "超音波の周波数が高い場合や結晶粒が粗大な場合には、散乱減衰が大きく、結晶粒界における散乱などにより林状エコーが表れやすい。広帯域(高分解能)探触子を使用すれば組織が粗い試験体のＳＮ比の向上が期待できる。" },
+            { id: 117, question: "次の文は、平板継手溶接部をJIS Z 3060により探傷し、検出されたきずの評価について述べたものである。厚さ20mmの鋼突合せ溶接部を、JIS Z 3060により超音波探傷をしたところ、同じ断面位置で数箇所からきずを検出した。きずAとBの指示長さは各20mm、その間隔が10mm、きずCの指示長さは10mmで、BとCの間隔は25mmであった。この溶接部のきずの分類は何類か。", choices: { a: "1類", b: "2類", c: "3類", d: "4類" }, answer: "d", explanation: "JIS Z 3060では、きずときずの間隔が大きい方のきずの指示長さと同じか又はそれより短い場合は同一きず群とみなす。A,Bは同一きず群でCは独立したきず。A、B同一きず群は20+10+20=50mmで4類、Cは指示長さ10mmで2類。この溶接部のきずの分類は4類である。" },
+            { id: 118, question: "次の文は、柱－梁の十字継手の斜角探傷について述べたものである。探傷箇所①のY=102mm、W=75mmで検出されたエコーの反射源として想定されるものはどれか。", choices: { a: "レ形溶接部の開先面の融合不良", b: "水平部材中の母材のきず", c: "裏当金溶接部のきず", d: "溶接金属中のきず" }, answer: "b", explanation: "探傷箇所①の反射源位置を計算すると、A面からの深さd=2T-Wcosθ=40-75×cos70°=14.3mm、基準面からの距離k=Y-Wsinθ=102-75×sin70°=+31.5mmとなり、水平部材中の母材のきずと推定される。" },
+            { id: 119, question: "次の文は、裏当て金付きＴ継手溶接部の斜角探傷について述べたものである。A面から超音波探傷したところ、探触子溶接部距離がＹ＝９１ｍｍで探傷図形が得られた。探触子5Z10×10A70、STB屈折角70.0°、測定範囲125mm、ビーム路程85mmの場合、Ａ面からの深さは何mmか。", choices: { a: "9", b: "23", c: "27", d: "29" }, answer: "c", explanation: "A面からの深さ：d=W×cosθ＝85×cos70°＝29mm、板厚28mmであるので1回反射しておりd=2T-W×cosθ＝2×28-29＝27mm" },
+            { id: 120, question: "次の文は、垂直探傷における残留エコーの発生について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "減衰が大きい材料で、パルス繰返し周波数が低すぎると残留エコーが発生する。", b: "減衰が大きい材料で、パルス繰返し周波数が高すぎると残留エコーが発生する。", c: "減衰が小さい材料で、パルス繰返し周波数が低すぎると残留エコーが発生する。", d: "減衰が小さい材料で、パルス繰返し周波数が高すぎると残留エコーが発生する。" }, answer: "d", explanation: "残留エコーとは、パルス反射法において試験体中のエコーが、次のパルスが送信された後も残っているため、受信されて探傷図形に現れるエコーである。減衰の少ない材料を探傷する場合、パルス繰返し周波数が高いと、一つ前のパルスが残ってしまい、残留エコーとして現れる。" },
+            { id: 121, question: "次の文は、保守検査で材質STPT（高温配管用炭素鋼鋼管）、100Aのプラント配管の肉厚測定について述べたものである。測定上の注意点について正しいものを一つ選び、記号で答えよ。ただし、プラントは稼働中で内部は100℃の蒸気配管である。", choices: { a: "探触子は、市販の厚さ測定用探触子を用いる。", b: "接触媒質は、測定面の温度で十分性能を発揮する高温用の接触媒質を使用する。", c: "厚さ計の調整は、試験体と同材質で厚さが正確なものを使用し作業事務所で行う。", d: "探触子の接触時間は、安定した値が得られるよう十分な時間とする。" }, answer: "b", explanation: "通常の接触媒質では、高温によって蒸発してしまい、接触媒質としての役割を果たさなくなってしまう。そこで、必ず高温専用の接触媒質を適用する必要がある。また、探触子が接触する測定時間はできるだけ短くした方が器材への負担は軽くなる。" },
+            { id: 122, question: "次の文は、ある金属材料の垂直探傷について述べたものである。垂直探触子5Z20Nを使用し、STB-A1（音速5900m/s）によって測定範囲を100mmに調整して、長さ70.0mmのある材料を超音波探傷したら、ビーム路程89.0mmの位置に第1回底面エコーが現れた。この材料の材質は何か。", choices: { a: "アルミニウム(6260m/s)", b: "チタン(5990m/s)", c: "黄銅(4640m/s)", d: "18-8ステンレス(5790m/s)" }, answer: "c", explanation: "測定物の音速＝K×STB-A1の音速＝0.7865×5900≒4640m/sとなる。STB-A1より音速が遅いと70mmより長く表示される。よって黄銅である。" },
+            { id: 123, question: "次の文は、ある金属材料の垂直探傷について述べたものである。垂直探触子5Z20Nを使用し、STB-A1（音速5900m/s）によって測定範囲を100mmに調整して、長さ80.0mmのある材料を超音波探傷したら、ビーム路程75.5mmの位置に第1回底面エコーが現れた。この材料の材質は何か。", choices: { a: "鉛(2170m/s)", b: "アルミニウム(6260m/s)", c: "軟鋼(5900m/s)", d: "18-8ステンレス(5790m/s)" }, answer: "b", explanation: "測定物の音速＝T×STB-A1の音速／S＝80×5900/75.5＝6251.7≒6260m/s。STB-A1より音速が速いと80mmより短く表示される。よってアルミニウムである。" },
+            { id: 124, question: "次の文は、JIS G 0801によって、探触子5C20Nを用いて板厚19mmの厚鋼板を垂直探傷し、探傷図形に「積算効果」が現れたときの評価について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "板厚30mmを超える厚鋼板の探傷と同様に、Ｆ１で評価すべきである。", b: "板厚30mm以下であるからＦ２で評価すべきである。", c: "板厚30mm以下であるからＦ３で評価すべきである。", d: "Ｆエコーの最大値で評価すべきである。" }, answer: "a", explanation: "積算効果は比較的板厚が薄い、減衰の少ない、底面反射回数の多い鋼板の試験体によく見られる。また、きずエコーを評価する場合、たとえ2回目、3回目のエコー高さが高くても、F1で評価を行なう。" },
+            { id: 125, question: "次の文は、林状エコーに対する対策について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "林状エコーが多数発生する試験体の探傷では、振動子が小さい探触子を用いる。", b: "林状エコーが多数発生する試験体の探傷では、狭帯域探触子を用いる。", c: "林状エコーが多数発生する試験体の探傷では、広帯域探触子を用いる。", d: "林状エコーが多数発生する試験体の探傷では、高い周波数の探触子を用いる。" }, answer: "c", explanation: "超音波の波長が金属の結晶粒の大きさと同程度ないしそれ以下のとき、散乱減衰が大きく、林状エコーが現れてきずの検出が困難になる。このような場合、低い周波数を適用する。広帯域探触子は周波数範囲が広くエコーの幅が短く分解能が良い。これを組織の粗い試験体に用いるとSN比の向上が期待できる。" },
+            { id: 126, question: "次の文は、溶接部の超音波探傷試験において林状エコーが多く現れた場合の対応について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "時間をしばらく空けて、夜間に再探傷を実施した。", b: "周波数の低い探触子又は、広帯域探触子を用いて、再探傷を実施した。", c: "周波数の高い探触子を用いて、再探傷を実施した。", d: "きずエコーを明瞭に検出するため、探傷感度を6dB高めて再探傷した。" }, answer: "b", explanation: "林状エコーが多く現れた場合の対処方法として、低い周波数の探触子又は広帯域探触子を使用することで林状エコーは改善する。" },
+            { id: 127, question: "次の文は、溶接部の超音波探傷試験における妨害エコーについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "溶接部の探傷では、探傷データから反射源の位置を算出し、溶接部の断面形状、寸法を考慮して、きずエコーか妨害エコーかの判断をする。", b: "斜角探傷で溶接部のビード止端部付近からのエコーが検出された。これは余盛による妨害エコーと判断するのがよい。", c: "溶接部の妨害エコーは、溶接部の形状（余盛や裏当て金など）によってモード変換を起こしたクリーピング波によるエコーである。", d: "裏はつり形式のT継手溶接部では、柱材との隙間のタレ込みからの妨害エコーが発生しやすい。" }, answer: "a", explanation: "検出したエコーの反射源の位置を算出し、検出した位置の形状を考慮して妨害エコーであるかきずエコーであるかの判断をする。溶接ビード止端部付近は割れが発生しやすく、これを余盛による妨害エコーと判断するのは軽率である。" },
+            { id: 128, question: "次の文は、JIS Z 3060に規定する試験報告書に必要な記録項目を示したものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "試験年月日、試験技術者名、試験技術者の資格", b: "探傷器繰返し周波数、探傷器製造年月日", c: "標準試験片購入年月日、対比試験片の製造年月日", d: "試験体の溶接日時、試験体の製造者" }, answer: "a", explanation: "JIS Z 3060の11記録では、試験年月日、試験技術者名、試験技術者の資格が含まれている。その他としては、工事名・溶接方法及び開先形状・使用した探傷器名と識別番号・探傷器の点検年月日・検査結果ときずエコーの詳細記録・合否及びその基準等を記載する。" },
+            { id: 129, question: "次の文は、JIS G 0587による超音波探傷試験報告書について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "超音波探傷試験報告書は、事前に受渡当事者間で取り決めた場合には、その内容に従って作成すればよい。", b: "超音波探傷試験報告書には、製造日、試験日、出荷予定日の記載を含む。", c: "鍛鋼品に関する記録には、品番を記載すれば材質、寸法は特に記載しなくともよい。", d: "試験結果の報告項目には、表面粗さ、減衰係数、減衰補正量、きずの位置、きずの分類を含む。" }, answer: "a", explanation: "JIS G 0587では、『11.報告』の一般事項で『鍛鋼品の試験を行った場合、次に示す項目について記録し、報告しなければならない。あらかじめ受渡当事者間で取り決めた場合はその協定による。』とある。" },
+            { id: 130, question: "次の文は、JIS Z 2305に基づく超音波探傷試験技術者レベル2の役割の内容について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "使用する特定のNDT方法を指定する。", b: "NDTを実施し、監督する。", c: "規格、コードを解釈する。", d: "NDT手順を作成する。" }, answer: "b", explanation: "レベル2に認証された技術者はNDT手順に従ってNDTを実施する力量を実証している。レベル2技術者は、NDTを実施し、監督することができる。" },
+            { id: 131, question: "次の文は、JIS Z 3060による探傷装置の調整及び点検について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "測定範囲及び探傷感度は作業開始時に調整しなければならないが、入射点及びSTB屈折角は継続して使用している場合は前日の値を使用してもよい。", b: "測定範囲及び探傷感度は作業開始時、作業開始から4時間以内ごと及び作業終了時に点検し確認しなければならない。", c: "再点検時、探傷感度が直前の調整又は確認時より3dB低下している場合は、再調整し直前に調整又は確認した以後に実施した試験を再試験する。", d: "再点検時、探傷感度が直前の調整又は確認時より3dB増加している場合は、再調整し直前に調整又は確認した以後に実施した試験で、きずを検出した部分を再試験する。" }, answer: "b", explanation: "JIS Z 3060の9.1.7探傷装置の測定、調整及び点検では、『入射点、STB屈折角、測定範囲及び探傷感度は、作業開始時に測定及び調整する。また、これらは作業開始後4時間以内ごと及び作業終了時に点検し、これらの条件の変化量を確認する。』とある。" }
+        ];
+
+        // UT問題をquizDataに設定
+        quizData["2023"].categories["UT"].questions = utQuestions;
+
+        // アプリケーションの状態
+        let currentYear = null;
+        let currentCategory = null;
+        let currentSetIndex = null;
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let isRandom = false;
+        let sessionCorrect = 0;
+        let sessionTotal = 0;
+        const QUESTIONS_PER_SET = 20;
+
+        // 初期化
+        function init() {
+            renderYearList();
+            setupOrderToggle();
+        }
+
+        // 年度リストの描画
+        function renderYearList() {
+            const yearList = document.getElementById('year-list');
+            yearList.innerHTML = '';
+
+            Object.keys(quizData).forEach(year => {
+                const data = quizData[year];
+                const progress = getYearProgress(year);
+                const totalQuestions = getTotalQuestionsInYear(year);
+                const percentage = totalQuestions > 0 ? Math.round((progress / totalQuestions) * 100) : 0;
+
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.onclick = () => selectYear(year);
+                item.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-name">${data.name}</div>
+                        <div class="item-stats">${progress} / ${totalQuestions} 問正解</div>
+                    </div>
+                    <div class="item-right">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="progress-text">${percentage}%</div>
+                    </div>
+                `;
+                yearList.appendChild(item);
+            });
+        }
+
+        // 年度内の総問題数を取得
+        function getTotalQuestionsInYear(year) {
+            let total = 0;
+            const categories = quizData[year].categories;
+            for (const cat in categories) {
+                total += categories[cat].questions.length;
+            }
+            return total;
+        }
+
+        // 年度の進捗を取得
+        function getYearProgress(year) {
+            let correct = 0;
+            const categories = quizData[year].categories;
+            for (const cat in categories) {
+                const progress = getProgress(year, cat);
+                correct += progress.correct;
+            }
+            return correct;
+        }
+
+        // 年度選択
+        function selectYear(year) {
+            currentYear = year;
+            renderCategoryList();
+            showScreen('category-screen');
+        }
+
+        // 種目リストの描画
+        function renderCategoryList() {
+            document.getElementById('category-title').textContent = quizData[currentYear].name;
+            const categoryList = document.getElementById('category-list');
+            categoryList.innerHTML = '';
+
+            const categories = quizData[currentYear].categories;
+            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt' };
+
+            for (const catKey in categories) {
+                const cat = categories[catKey];
+                if (cat.questions.length === 0) continue; // 問題がない種目はスキップ
+
+                const progress = getProgress(currentYear, catKey);
+                const totalQuestions = cat.questions.length;
+                const percentage = totalQuestions > 0 ? Math.round((progress.correct / totalQuestions) * 100) : 0;
+
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.onclick = () => selectCategory(catKey);
+                item.innerHTML = `
+                    <div class="item-left">
+                        <div class="category-icon ${categoryColors[catKey] || ''}">${catKey}</div>
+                        <div class="item-info">
+                            <div class="item-name">${cat.name}</div>
+                            <div class="item-stats">${progress.correct} / ${totalQuestions} 問正解</div>
+                        </div>
+                    </div>
+                    <div class="item-right">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="progress-text">${percentage}%</div>
+                    </div>
+                `;
+                categoryList.appendChild(item);
+            }
+        }
+
+        // 種目選択
+        function selectCategory(category) {
+            currentCategory = category;
+            renderSetList();
+            showScreen('set-screen');
+        }
+
+        // 問題セットリストの描画
+        function renderSetList() {
+            const cat = quizData[currentYear].categories[currentCategory];
+            document.getElementById('set-title').textContent = cat.name;
+            const setList = document.getElementById('set-list');
+            setList.innerHTML = '';
+
+            const totalQuestions = cat.questions.length;
+            const numSets = Math.ceil(totalQuestions / QUESTIONS_PER_SET);
+
+            for (let i = 0; i < numSets; i++) {
+                const startNum = i * QUESTIONS_PER_SET + 1;
+                const endNum = Math.min((i + 1) * QUESTIONS_PER_SET, totalQuestions);
+                const setProgress = getSetProgress(currentYear, currentCategory, i);
+                const setTotal = endNum - startNum + 1;
+                const percentage = setTotal > 0 ? Math.round((setProgress / setTotal) * 100) : 0;
+
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.onclick = () => startQuiz(i);
+                item.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-name">問${startNum}～${endNum}</div>
+                        <div class="item-stats">${setProgress} / ${setTotal} 問正解</div>
+                    </div>
+                    <div class="item-right">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="progress-text">${percentage}%</div>
+                    </div>
+                `;
+                setList.appendChild(item);
+            }
+        }
+
+        // 進捗の取得
+        function getProgress(year, category) {
+            const saved = localStorage.getItem(`quiz_progress_${year}_${category}`);
+            return saved ? JSON.parse(saved) : { correct: 0, answeredIds: [] };
+        }
+
+        // 進捗の保存
+        function saveProgress(year, category, questionId) {
+            const progress = getProgress(year, category);
+            if (!progress.answeredIds.includes(questionId)) {
+                progress.answeredIds.push(questionId);
+                progress.correct++;
+            }
+            localStorage.setItem(`quiz_progress_${year}_${category}`, JSON.stringify(progress));
+        }
+
+        // セット内の進捗を取得
+        function getSetProgress(year, category, setIndex) {
+            const progress = getProgress(year, category);
+            const cat = quizData[year].categories[category];
+            const startIdx = setIndex * QUESTIONS_PER_SET;
+            const endIdx = Math.min(startIdx + QUESTIONS_PER_SET, cat.questions.length);
+
+            let correct = 0;
+            for (let i = startIdx; i < endIdx; i++) {
+                if (progress.answeredIds.includes(cat.questions[i].id)) {
+                    correct++;
+                }
+            }
+            return correct;
+        }
+
+        // 出題順序の切り替え
+        function setupOrderToggle() {
+            const seqBtn = document.getElementById('order-sequential');
+            const randBtn = document.getElementById('order-random');
+
+            seqBtn.onclick = () => {
+                isRandom = false;
+                seqBtn.classList.add('active');
+                randBtn.classList.remove('active');
+            };
+
+            randBtn.onclick = () => {
+                isRandom = true;
+                randBtn.classList.add('active');
+                seqBtn.classList.remove('active');
+            };
+        }
+
+        // クイズ開始
+        function startQuiz(setIndex) {
+            currentSetIndex = setIndex;
+            const cat = quizData[currentYear].categories[currentCategory];
+            const progress = getProgress(currentYear, currentCategory);
+
+            const startIdx = setIndex * QUESTIONS_PER_SET;
+            const endIdx = Math.min(startIdx + QUESTIONS_PER_SET, cat.questions.length);
+            const setQuestions = cat.questions.slice(startIdx, endIdx);
+
+            // 未正解の問題のみ取得
+            currentQuestions = setQuestions.filter(q => !progress.answeredIds.includes(q.id));
+
+            if (currentQuestions.length === 0) {
+                alert('このセットは全問正解済みです！進捗をリセットして再挑戦できます。');
+                return;
+            }
+
+            // ランダム順に並べ替え
+            if (isRandom) {
+                currentQuestions = shuffleArray([...currentQuestions]);
+            }
+
+            currentIndex = 0;
+            sessionCorrect = 0;
+            sessionTotal = 0;
+
+            showScreen('quiz-screen');
+            showQuestion();
+        }
+
+        // 配列のシャッフル
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // 問題の表示
+        function showQuestion() {
+            const question = currentQuestions[currentIndex];
+
+            document.getElementById('quiz-progress').textContent =
+                `残り ${currentQuestions.length - currentIndex} 問`;
+            document.getElementById('question-number').textContent =
+                `問題 ${question.id}`;
+            document.getElementById('question-text').textContent = question.question;
+
+            // 選択肢の表示
+            const choicesDiv = document.getElementById('choices');
+            choicesDiv.innerHTML = '';
+
+            const labels = ['a', 'b', 'c', 'd'];
+            labels.forEach(label => {
+                if (question.choices[label]) {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.innerHTML = `
+                        <span class="choice-label">${label}</span>
+                        <span class="choice-text">${question.choices[label]}</span>
+                    `;
+                    btn.onclick = () => selectAnswer(label);
+                    choicesDiv.appendChild(btn);
+                }
+            });
+
+            // 「わからない」選択肢を追加
+            const unknownBtn = document.createElement('button');
+            unknownBtn.className = 'choice-btn';
+            unknownBtn.innerHTML = `
+                <span class="choice-label">?</span>
+                <span class="choice-text">わからない</span>
+            `;
+            unknownBtn.onclick = () => selectAnswer('unknown');
+            choicesDiv.appendChild(unknownBtn);
+
+            // 結果表示をリセット
+            document.getElementById('result-display').style.display = 'none';
+            document.getElementById('explanation').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+        }
+
+        // 回答選択
+        function selectAnswer(selected) {
+            const question = currentQuestions[currentIndex];
+            const isCorrect = selected === question.answer;
+            const isUnknown = selected === 'unknown';
+
+            sessionTotal++;
+
+            // ボタンを無効化し、正解・不正解を表示
+            const buttons = document.querySelectorAll('.choice-btn');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                const label = btn.querySelector('.choice-label').textContent;
+                if (label === question.answer) {
+                    btn.classList.add('correct');
+                } else if (label === selected && !isCorrect) {
+                    btn.classList.add(isUnknown ? 'unknown' : 'wrong');
+                }
+            });
+
+            // 結果表示
+            const resultDiv = document.getElementById('result-display');
+            resultDiv.style.display = 'block';
+
+            if (isCorrect) {
+                sessionCorrect++;
+                resultDiv.className = 'result-display correct';
+                document.getElementById('result-icon').textContent = '○';
+                document.getElementById('result-text').textContent = '正解！';
+                saveProgress(currentYear, currentCategory, question.id);
+                // 正解した問題はリストから除外
+                currentQuestions.splice(currentIndex, 1);
+            } else {
+                resultDiv.className = 'result-display wrong';
+                document.getElementById('result-icon').textContent = '×';
+                document.getElementById('result-text').textContent = isUnknown ? 'わからない' : '不正解';
+                // 不正解・わからない問題は後ろに回す
+                const wrongQuestion = currentQuestions.splice(currentIndex, 1)[0];
+                currentQuestions.push(wrongQuestion);
+            }
+
+            // 解説表示
+            if (question.explanation) {
+                document.getElementById('explanation').style.display = 'block';
+                document.getElementById('explanation-text').textContent = question.explanation;
+            }
+
+            // 次へボタン表示
+            document.getElementById('next-btn').style.display = 'block';
+            document.getElementById('next-btn').textContent =
+                currentQuestions.length > 0 ? '次の問題へ' : '結果を見る';
+        }
+
+        // 次の問題へ
+        function nextQuestion() {
+            if (currentQuestions.length === 0) {
+                showComplete();
+            } else {
+                if (currentIndex >= currentQuestions.length) {
+                    currentIndex = 0;
+                }
+                showQuestion();
+            }
+        }
+
+        // 完了画面
+        function showComplete() {
+            showScreen('complete-screen');
+            const cat = quizData[currentYear].categories[currentCategory];
+            const startNum = currentSetIndex * QUESTIONS_PER_SET + 1;
+            const endNum = Math.min((currentSetIndex + 1) * QUESTIONS_PER_SET, cat.questions.length);
+
+            const setProgress = getSetProgress(currentYear, currentCategory, currentSetIndex);
+            const setTotal = endNum - startNum + 1;
+            const percentage = Math.round((setProgress / setTotal) * 100);
+
+            document.getElementById('complete-stats').innerHTML = `
+                ${cat.name}<br>
+                問${startNum}～${endNum}<br>
+                正答率: ${percentage}% (${setProgress}/${setTotal}問)
+            `;
+        }
+
+        // 画面切り替え
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // ナビゲーション
+        function goHome() {
+            currentYear = null;
+            currentCategory = null;
+            currentSetIndex = null;
+            renderYearList();
+            showScreen('home-screen');
+        }
+
+        function goToCategory() {
+            currentCategory = null;
+            currentSetIndex = null;
+            renderCategoryList();
+            showScreen('category-screen');
+        }
+
+        function goToSet() {
+            currentSetIndex = null;
+            renderSetList();
+            showScreen('set-screen');
+        }
+
+        // 全進捗リセット
+        function resetAllProgress() {
+            if (confirm('全ての進捗をリセットしますか？')) {
+                for (const year in quizData) {
+                    for (const cat in quizData[year].categories) {
+                        localStorage.removeItem(`quiz_progress_${year}_${cat}`);
+                    }
+                }
+                renderYearList();
+            }
+        }
+
+        // 初期化実行
+        init();
+    </script>
+</body>
+</html>
