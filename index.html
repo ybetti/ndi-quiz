@@ -441,6 +441,86 @@
             cursor: pointer;
         }
 
+        /* ログイン画面 */
+        .login-form {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .login-input:focus {
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .login-btn:hover {
+            opacity: 0.9;
+        }
+
+        .login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .login-error {
+            color: #dc3545;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f0f0ff;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .logout-btn {
+            padding: 6px 12px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .logout-btn:hover {
+            background: #5a6268;
+        }
+
         /* レスポンシブ */
         @media (max-width: 600px) {
             body {
@@ -475,9 +555,25 @@
 <body>
     <div class="container">
         <div class="card">
-            <!-- ホーム画面（年度選択） -->
-            <div id="home-screen" class="screen active">
+            <!-- ログイン画面 -->
+            <div id="login-screen" class="screen active">
                 <h1>NDI問題集</h1>
+                <h2>ログイン</h2>
+                <div class="login-form">
+                    <input type="text" id="employee-id" class="login-input" placeholder="社員番号（4桁）" maxlength="4" pattern="[0-9]{4}">
+                    <input type="text" id="employee-name" class="login-input" placeholder="名前">
+                    <button class="login-btn" onclick="login()">ログイン</button>
+                    <div id="login-error" class="login-error">社員番号は4桁の数字で入力してください</div>
+                </div>
+            </div>
+
+            <!-- ホーム画面（年度選択） -->
+            <div id="home-screen" class="screen">
+                <h1>NDI問題集</h1>
+                <div id="user-info" class="user-info">
+                    <span class="user-name" id="display-user-name"></span>
+                    <button class="logout-btn" onclick="logout()">ログアウト</button>
+                </div>
                 <div class="item-list" id="year-list"></div>
 
                 <div class="options-section">
@@ -831,11 +927,60 @@
         let sessionCorrect = 0;
         let sessionTotal = 0;
         const QUESTIONS_PER_SET = 20;
+        let currentUser = null;
 
         // 初期化
         function init() {
-            renderYearList();
+            // ログイン済みユーザーを確認
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showHomeScreen();
+            } else {
+                showScreen('login-screen');
+            }
             setupOrderToggle();
+        }
+
+        // ログイン処理
+        function login() {
+            const employeeId = document.getElementById('employee-id').value.trim();
+            const employeeName = document.getElementById('employee-name').value.trim();
+            const errorDiv = document.getElementById('login-error');
+
+            // バリデーション
+            if (!/^[0-9]{4}$/.test(employeeId)) {
+                errorDiv.textContent = '社員番号は4桁の数字で入力してください';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!employeeName) {
+                errorDiv.textContent = '名前を入力してください';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            errorDiv.style.display = 'none';
+            currentUser = { id: employeeId, name: employeeName };
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            showHomeScreen();
+        }
+
+        // ログアウト処理
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('employee-id').value = '';
+            document.getElementById('employee-name').value = '';
+            showScreen('login-screen');
+        }
+
+        // ホーム画面を表示
+        function showHomeScreen() {
+            document.getElementById('display-user-name').textContent =
+                `${currentUser.id} ${currentUser.name}`;
+            renderYearList();
+            showScreen('home-screen');
         }
 
         // 年度リストの描画
@@ -978,20 +1123,22 @@
             }
         }
 
-        // 進捗の取得
+        // 進捗の取得（ユーザー別）
         function getProgress(year, category) {
-            const saved = localStorage.getItem(`quiz_progress_${year}_${category}`);
+            const key = `quiz_progress_${currentUser.id}_${year}_${category}`;
+            const saved = localStorage.getItem(key);
             return saved ? JSON.parse(saved) : { correct: 0, answeredIds: [] };
         }
 
-        // 進捗の保存
+        // 進捗の保存（ユーザー別）
         function saveProgress(year, category, questionId) {
             const progress = getProgress(year, category);
             if (!progress.answeredIds.includes(questionId)) {
                 progress.answeredIds.push(questionId);
                 progress.correct++;
             }
-            localStorage.setItem(`quiz_progress_${year}_${category}`, JSON.stringify(progress));
+            const key = `quiz_progress_${currentUser.id}_${year}_${category}`;
+            localStorage.setItem(key, JSON.stringify(progress));
         }
 
         // セット内の進捗を取得
@@ -1225,12 +1372,12 @@
             showScreen('set-screen');
         }
 
-        // 全進捗リセット
+        // 全進捗リセット（現在のユーザーのみ）
         function resetAllProgress() {
-            if (confirm('全ての進捗をリセットしますか？')) {
+            if (confirm(`${currentUser.name}さんの全ての進捗をリセットしますか？`)) {
                 for (const year in quizData) {
                     for (const cat in quizData[year].categories) {
-                        localStorage.removeItem(`quiz_progress_${year}_${cat}`);
+                        localStorage.removeItem(`quiz_progress_${currentUser.id}_${year}_${cat}`);
                     }
                 }
                 renderYearList();
