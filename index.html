@@ -667,8 +667,103 @@
             }
         };
 
-        // MT問題データ（94問）
-        const mtQuestions = [
+        // CSVパーサー
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const questions = [];
+
+            // ヘッダー行をスキップ
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                // CSVをパース（カンマ区切り、クォート対応）
+                const fields = parseCSVLine(line);
+                if (fields.length >= 8) {
+                    questions.push({
+                        id: parseInt(fields[0]),
+                        question: fields[1],
+                        choices: {
+                            a: fields[2],
+                            b: fields[3],
+                            c: fields[4],
+                            d: fields[5]
+                        },
+                        answer: fields[6],
+                        explanation: fields[7]
+                    });
+                }
+            }
+            return questions;
+        }
+
+        // CSVの1行をパース（クォート対応）
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result;
+        }
+
+        // CSVから問題を読み込み
+        async function loadQuestionsFromCSV(filename) {
+            try {
+                const response = await fetch(`questions/${filename}`);
+                if (!response.ok) {
+                    console.warn(`${filename}の読み込みに失敗しました`);
+                    return [];
+                }
+                const csvText = await response.text();
+                return parseCSV(csvText);
+            } catch (error) {
+                console.warn(`${filename}の読み込みエラー:`, error);
+                return [];
+            }
+        }
+
+        // 全問題を読み込み
+        async function loadAllQuestions() {
+            // 2024年度 MT問題
+            const mt2024 = await loadQuestionsFromCSV('mt_questions.csv');
+            quizData["2024"].categories["MT"].questions = mt2024;
+
+            // 2023年度を追加
+            quizData["2023"] = {
+                name: "2023年度問題",
+                categories: {
+                    "MT": { name: "磁気探傷試験(MT)", questions: [] },
+                    "PT": { name: "浸透探傷試験(PT)", questions: [] },
+                    "UT": { name: "超音波探傷試験(UT)", questions: [] },
+                    "RT": { name: "放射線透過試験(RT)", questions: [] }
+                }
+            };
+
+            // 2023年度 UT問題
+            const ut2023 = await loadQuestionsFromCSV('ut_questions.csv');
+            quizData["2023"].categories["UT"].questions = ut2023;
+        }
+
+        // 以下は既存のMT問題データ（CSV読み込みに失敗した場合のフォールバック用・削除予定）
+        const mtQuestions_backup = [
             { id: 1, question: "磁粉探傷試験が適用できない材料はどれか。", choices: { a: "炭素鋼", b: "低合金鋼", c: "オーステナイト系ステンレス鋼", d: "ニッケル鋼" }, answer: "c", explanation: "オーステナイト系ステンレス鋼は非磁性材料であるため、磁粉探傷試験は適用できない。" },
             { id: 2, question: "磁粉探傷試験で検出が困難なきずはどれか。", choices: { a: "表面割れ", b: "溶接ビード止端部のアンダカット", c: "内部介在物", d: "研削割れ" }, answer: "c", explanation: "磁粉探傷試験は表面及び表面直下のきず検出に有効であり、内部きずの検出は困難である。" },
             { id: 3, question: "磁化の強さHと磁束密度Bの関係を表す曲線はどれか。", choices: { a: "正弦曲線", b: "ヒステリシス曲線", c: "双曲線", d: "指数曲線" }, answer: "b", explanation: "磁化の強さHと磁束密度Bの関係を表す曲線をヒステリシス曲線（磁化曲線）という。" },
@@ -765,22 +860,10 @@
             { id: 94, question: "磁粉探傷試験の検査記録として保管すべき情報として、適切でないものはどれか。", choices: { a: "試験日と検査員名", b: "磁化方法と磁化条件", c: "検査室の湿度", d: "検出されたきずの位置と大きさ" }, answer: "c", explanation: "検査記録には試験日、検査員名、磁化方法・条件、検出きずの情報などを記録する。検査室の湿度は通常記録事項ではない。" }
         ];
 
-        // MT問題をquizDataに設定
-        quizData["2024"].categories["MT"].questions = mtQuestions;
+        // MT問題は loadAllQuestions() でCSVから読み込み
 
-        // 2023年度データを追加
-        quizData["2023"] = {
-            name: "2023年度問題",
-            categories: {
-                "MT": { name: "磁気探傷試験(MT)", questions: [] },
-                "PT": { name: "浸透探傷試験(PT)", questions: [] },
-                "UT": { name: "超音波探傷試験(UT)", questions: [] },
-                "RT": { name: "放射線透過試験(RT)", questions: [] }
-            }
-        };
-
-        // UT問題データ（131問）
-        const utQuestions = [
+        // UT問題データ（CSVから読み込み - 以下のデータは削除予定）
+        const utQuestions_old = [
             { id: 1, question: "次の文は、曲率のある管材（エルボ部）の厚さ測定の内外周探傷ピッチについて述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "エルボ部内周部と外周部は同じ探傷ピッチで行う。", b: "エルボ部内周部は外周部より探傷ピッチを大きくする。", c: "エルボ部外周部は内周部より探傷ピッチを大きくする。", d: "エルボ部外周部も内周部も曲率のない直管と同じ探傷ピッチで行う。" }, answer: "b", explanation: "エルボ部内周部は外周部より探傷ピッチを大きくする。減肉の著しい部位、すなわち外周部（背側）の管軸方向の曲管部中央付近及びやや下流側の位置を細ピッチで測定するのがよい。" },
             { id: 2, question: "次の文は、超音波探傷試験を行う目的について述べたものである。適切なものを一つ選び、記号で答えよ。", choices: { a: "製品の破損防止のために、超音波探傷試験を行う。", b: "製品の品質保証のために、超音波探傷試験を行う。", c: "製品の価格を上げるために、超音波探傷試験を行う。", d: "製品を安価に提供するために、超音波探傷試験を行う。" }, answer: "b", explanation: "品質保証は、最終出荷物の品質を保証するために、規格や客先仕様などで決められた試験方法・判定基準などに基づき実施される。" },
             { id: 3, question: "次の文は、JIS Z 2305に基づく超音波探傷試験技術者レベル2の役割について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "日常、レベル1技術者に対して訓練・指導する責任はあるが、新しく資格を取得したレベル2技術者に対して訓練・指導を行ってはならない。", b: "レベル2技術者は、超音波探傷試験方法の適用限界を決定することはできない。", c: "レベル2技術者は、超音波探傷試験を実施するか、又はレベル1技術者が実施する超音波探傷試験を監督しなければならない。", d: "超音波探傷試験結果を取りまとめて報告し、超音波探傷試験設備と職員についての全責任を持たなければならない。" }, answer: "c", explanation: "レベル2技術者は、NDTを実施し、監督する。レベル2又はそれより下のレベルの全ての作業を実施し、監督する。" },
@@ -912,11 +995,6 @@
             { id: 129, question: "次の文は、JIS G 0587による超音波探傷試験報告書について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "超音波探傷試験報告書は、事前に受渡当事者間で取り決めた場合には、その内容に従って作成すればよい。", b: "超音波探傷試験報告書には、製造日、試験日、出荷予定日の記載を含む。", c: "鍛鋼品に関する記録には、品番を記載すれば材質、寸法は特に記載しなくともよい。", d: "試験結果の報告項目には、表面粗さ、減衰係数、減衰補正量、きずの位置、きずの分類を含む。" }, answer: "a", explanation: "JIS G 0587では、『11.報告』の一般事項で『鍛鋼品の試験を行った場合、次に示す項目について記録し、報告しなければならない。あらかじめ受渡当事者間で取り決めた場合はその協定による。』とある。" },
             { id: 130, question: "次の文は、JIS Z 2305に基づく超音波探傷試験技術者レベル2の役割の内容について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "使用する特定のNDT方法を指定する。", b: "NDTを実施し、監督する。", c: "規格、コードを解釈する。", d: "NDT手順を作成する。" }, answer: "b", explanation: "レベル2に認証された技術者はNDT手順に従ってNDTを実施する力量を実証している。レベル2技術者は、NDTを実施し、監督することができる。" },
             { id: 131, question: "次の文は、JIS Z 3060による探傷装置の調整及び点検について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "測定範囲及び探傷感度は作業開始時に調整しなければならないが、入射点及びSTB屈折角は継続して使用している場合は前日の値を使用してもよい。", b: "測定範囲及び探傷感度は作業開始時、作業開始から4時間以内ごと及び作業終了時に点検し確認しなければならない。", c: "再点検時、探傷感度が直前の調整又は確認時より3dB低下している場合は、再調整し直前に調整又は確認した以後に実施した試験を再試験する。", d: "再点検時、探傷感度が直前の調整又は確認時より3dB増加している場合は、再調整し直前に調整又は確認した以後に実施した試験で、きずを検出した部分を再試験する。" }, answer: "b", explanation: "JIS Z 3060の9.1.7探傷装置の測定、調整及び点検では、『入射点、STB屈折角、測定範囲及び探傷感度は、作業開始時に測定及び調整する。また、これらは作業開始後4時間以内ごと及び作業終了時に点検し、これらの条件の変化量を確認する。』とある。" }
-        ];
-
-        // UT問題をquizDataに設定
-        quizData["2023"].categories["UT"].questions = utQuestions;
-
         // アプリケーションの状態
         let currentYear = null;
         let currentCategory = null;
@@ -929,8 +1007,11 @@
         const QUESTIONS_PER_SET = 20;
         let currentUser = null;
 
-        // 初期化
-        function init() {
+        // 初期化（非同期でCSVを読み込み）
+        async function init() {
+            // CSVから問題を読み込み
+            await loadAllQuestions();
+
             // ログイン済みユーザーを確認
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
