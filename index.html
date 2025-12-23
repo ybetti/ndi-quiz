@@ -680,18 +680,36 @@
                 // CSVをパース（カンマ区切り、クォート対応）
                 const fields = parseCSVLine(line);
                 if (fields.length >= 8) {
-                    questions.push({
-                        id: parseInt(fields[0]),
-                        question: fields[1],
-                        choices: {
-                            a: fields[2],
-                            b: fields[3],
-                            c: fields[4],
-                            d: fields[5]
-                        },
-                        answer: fields[6],
-                        explanation: fields[7]
-                    });
+                    // 5択対応（9フィールド以上の場合）
+                    if (fields.length >= 9 && fields[6] && fields[6].trim() !== '') {
+                        questions.push({
+                            id: parseInt(fields[0]),
+                            question: fields[1],
+                            choices: {
+                                a: fields[2],
+                                b: fields[3],
+                                c: fields[4],
+                                d: fields[5],
+                                e: fields[6]
+                            },
+                            answer: fields[7],
+                            explanation: fields[8]
+                        });
+                    } else {
+                        // 4択の場合
+                        questions.push({
+                            id: parseInt(fields[0]),
+                            question: fields[1],
+                            choices: {
+                                a: fields[2],
+                                b: fields[3],
+                                c: fields[4],
+                                d: fields[5]
+                            },
+                            answer: fields[6],
+                            explanation: fields[7]
+                        });
+                    }
                 }
             }
             return questions;
@@ -1358,7 +1376,7 @@
             const choicesDiv = document.getElementById('choices');
             choicesDiv.innerHTML = '';
 
-            const labels = ['a', 'b', 'c', 'd'];
+            const labels = ['a', 'b', 'c', 'd', 'e'];
             labels.forEach(label => {
                 if (question.choices[label]) {
                     const btn = document.createElement('button');
