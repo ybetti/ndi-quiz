@@ -595,10 +595,19 @@
                 <div class="item-list" id="category-list"></div>
             </div>
 
+            <!-- サブカテゴリ選択画面 -->
+            <div id="subcategory-screen" class="screen">
+                <div class="nav-header">
+                    <button class="back-btn" onclick="goToCategory()">← 戻る</button>
+                    <span class="nav-title" id="subcategory-title"></span>
+                </div>
+                <div class="item-list" id="subcategory-list"></div>
+            </div>
+
             <!-- 問題セット選択画面 -->
             <div id="set-screen" class="screen">
                 <div class="nav-header">
-                    <button class="back-btn" onclick="goToCategory()">← 戻る</button>
+                    <button class="back-btn" onclick="goToSubcategory()">← 戻る</button>
                     <span class="nav-title" id="set-title"></span>
                 </div>
                 <div class="item-list" id="set-list"></div>
@@ -796,10 +805,16 @@
                     "2024-04": { name: "2024年4月", questions: [] },
                     "2024-10": { name: "2024年10月", questions: [] },
                     "2025-04": { name: "2025年4月", questions: [] },
-                    "2025-10-management": { name: "2025年10月 管理知識", questions: [] },
-                    "2025-10-law": { name: "2025年10月 関係法令", questions: [] },
-                    "2025-10-measurement": { name: "2025年10月 測定知識", questions: [] },
-                    "2025-10-biology": { name: "2025年10月 生体影響", questions: [] }
+                    "2025-10": {
+                        name: "2025年10月",
+                        questions: [],
+                        subcategories: {
+                            "management": { name: "管理知識", questions: [] },
+                            "law": { name: "関係法令", questions: [] },
+                            "measurement": { name: "測定知識", questions: [] },
+                            "biology": { name: "生体影響", questions: [] }
+                        }
+                    }
                 }
             };
 
@@ -820,26 +835,26 @@
                 if (xr2025_04.length > 0) {
                     quizData["X線"].categories["2025-04"].questions = xr2025_04;
                 }
-                // 2025年10月 カテゴリ別読み込み
+                // 2025年10月 サブカテゴリ別読み込み
                 const xr2025_10_management = await loadQuestionsFromCSV('xr_2025_10_management.csv');
                 console.log('xr_2025_10_management loaded:', xr2025_10_management.length, '問');
                 if (xr2025_10_management.length > 0) {
-                    quizData["X線"].categories["2025-10-management"].questions = xr2025_10_management;
+                    quizData["X線"].categories["2025-10"].subcategories["management"].questions = xr2025_10_management;
                 }
                 const xr2025_10_law = await loadQuestionsFromCSV('xr_2025_10_law.csv');
                 console.log('xr_2025_10_law loaded:', xr2025_10_law.length, '問');
                 if (xr2025_10_law.length > 0) {
-                    quizData["X線"].categories["2025-10-law"].questions = xr2025_10_law;
+                    quizData["X線"].categories["2025-10"].subcategories["law"].questions = xr2025_10_law;
                 }
                 const xr2025_10_measurement = await loadQuestionsFromCSV('xr_2025_10_measurement.csv');
                 console.log('xr_2025_10_measurement loaded:', xr2025_10_measurement.length, '問');
                 if (xr2025_10_measurement.length > 0) {
-                    quizData["X線"].categories["2025-10-measurement"].questions = xr2025_10_measurement;
+                    quizData["X線"].categories["2025-10"].subcategories["measurement"].questions = xr2025_10_measurement;
                 }
                 const xr2025_10_biology = await loadQuestionsFromCSV('xr_2025_10_biology.csv');
                 console.log('xr_2025_10_biology loaded:', xr2025_10_biology.length, '問');
                 if (xr2025_10_biology.length > 0) {
-                    quizData["X線"].categories["2025-10-biology"].questions = xr2025_10_biology;
+                    quizData["X線"].categories["2025-10"].subcategories["biology"].questions = xr2025_10_biology;
                 }
                 console.log('X線カテゴリ読み込み完了:', quizData["X線"]);
             } catch (e) {
@@ -1085,6 +1100,7 @@
         // アプリケーションの状態
         let currentYear = null;
         let currentCategory = null;
+        let currentSubcategory = null;
         let currentSetIndex = null;
         let currentQuestions = [];
         let currentIndex = 0;
@@ -1212,15 +1228,31 @@
             categoryList.innerHTML = '';
 
             const categories = quizData[currentYear].categories;
-            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10-management': 'xr', '2025-10-law': 'xr', '2025-10-measurement': 'xr', '2025-10-biology': 'xr' };
+            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10': 'xr', 'management': 'xr', 'law': 'xr', 'measurement': 'xr', 'biology': 'xr' };
 
             for (const catKey in categories) {
                 const cat = categories[catKey];
-                if (cat.questions.length === 0) continue; // 問題がない種目はスキップ
 
-                const progress = getProgress(currentYear, catKey);
-                const totalQuestions = cat.questions.length;
-                const percentage = totalQuestions > 0 ? Math.round((progress.correct / totalQuestions) * 100) : 0;
+                // サブカテゴリがある場合はサブカテゴリの合計問題数を計算
+                let totalQuestions = cat.questions.length;
+                let totalCorrect = 0;
+
+                if (cat.subcategories) {
+                    totalQuestions = 0;
+                    for (const subKey in cat.subcategories) {
+                        const sub = cat.subcategories[subKey];
+                        totalQuestions += sub.questions.length;
+                        const subProgress = getProgress(currentYear, catKey + '_' + subKey);
+                        totalCorrect += subProgress.correct;
+                    }
+                } else {
+                    const progress = getProgress(currentYear, catKey);
+                    totalCorrect = progress.correct;
+                }
+
+                if (totalQuestions === 0) continue; // 問題がない種目はスキップ
+
+                const percentage = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
 
                 // X線カテゴリの場合は「XR」を表示、それ以外はカテゴリキーを表示
                 const iconLabel = currentYear === 'X線' ? 'XR' : catKey;
@@ -1232,7 +1264,7 @@
                         <div class="category-icon ${categoryColors[catKey] || ''}">${iconLabel}</div>
                         <div class="item-info">
                             <div class="item-name">${cat.name}</div>
-                            <div class="item-stats">${progress.correct} / ${totalQuestions} 問正解</div>
+                            <div class="item-stats">${totalCorrect} / ${totalQuestions} 問正解</div>
                         </div>
                     </div>
                     <div class="item-right">
@@ -1249,6 +1281,61 @@
         // 種目選択
         function selectCategory(category) {
             currentCategory = category;
+            currentSubcategory = null;
+            const cat = quizData[currentYear].categories[category];
+
+            // サブカテゴリがある場合はサブカテゴリリストを表示
+            if (cat.subcategories) {
+                renderSubcategoryList();
+                showScreen('subcategory-screen');
+            } else {
+                renderSetList();
+                showScreen('set-screen');
+            }
+        }
+
+        // サブカテゴリリストの描画
+        function renderSubcategoryList() {
+            const cat = quizData[currentYear].categories[currentCategory];
+            document.getElementById('subcategory-title').textContent = cat.name;
+            const subcategoryList = document.getElementById('subcategory-list');
+            subcategoryList.innerHTML = '';
+
+            const categoryColors = { 'management': 'xr', 'law': 'xr', 'measurement': 'xr', 'biology': 'xr' };
+
+            for (const subKey in cat.subcategories) {
+                const sub = cat.subcategories[subKey];
+                if (sub.questions.length === 0) continue;
+
+                const progress = getProgress(currentYear, currentCategory + '_' + subKey);
+                const totalQuestions = sub.questions.length;
+                const percentage = totalQuestions > 0 ? Math.round((progress.correct / totalQuestions) * 100) : 0;
+
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.onclick = () => selectSubcategory(subKey);
+                item.innerHTML = `
+                    <div class="item-left">
+                        <div class="category-icon ${categoryColors[subKey] || 'xr'}">XR</div>
+                        <div class="item-info">
+                            <div class="item-name">${sub.name}</div>
+                            <div class="item-stats">${progress.correct} / ${totalQuestions} 問正解</div>
+                        </div>
+                    </div>
+                    <div class="item-right">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="progress-text">${percentage}%</div>
+                    </div>
+                `;
+                subcategoryList.appendChild(item);
+            }
+        }
+
+        // サブカテゴリ選択
+        function selectSubcategory(subcategory) {
+            currentSubcategory = subcategory;
             renderSetList();
             showScreen('set-screen');
         }
@@ -1256,17 +1343,31 @@
         // 問題セットリストの描画
         function renderSetList() {
             const cat = quizData[currentYear].categories[currentCategory];
-            document.getElementById('set-title').textContent = cat.name;
+            let questions, title, progressKey;
+
+            // サブカテゴリがある場合
+            if (currentSubcategory && cat.subcategories) {
+                const sub = cat.subcategories[currentSubcategory];
+                questions = sub.questions;
+                title = sub.name;
+                progressKey = currentCategory + '_' + currentSubcategory;
+            } else {
+                questions = cat.questions;
+                title = cat.name;
+                progressKey = currentCategory;
+            }
+
+            document.getElementById('set-title').textContent = title;
             const setList = document.getElementById('set-list');
             setList.innerHTML = '';
 
-            const totalQuestions = cat.questions.length;
+            const totalQuestions = questions.length;
             const numSets = Math.ceil(totalQuestions / QUESTIONS_PER_SET);
 
             for (let i = 0; i < numSets; i++) {
                 const startNum = i * QUESTIONS_PER_SET + 1;
                 const endNum = Math.min((i + 1) * QUESTIONS_PER_SET, totalQuestions);
-                const setProgress = getSetProgress(currentYear, currentCategory, i);
+                const setProgress = getSetProgress(currentYear, progressKey, i);
                 const setTotal = endNum - startNum + 1;
                 const percentage = setTotal > 0 ? Math.round((setProgress / setTotal) * 100) : 0;
 
@@ -1345,11 +1446,22 @@
         function startQuiz(setIndex) {
             currentSetIndex = setIndex;
             const cat = quizData[currentYear].categories[currentCategory];
-            const progress = getProgress(currentYear, currentCategory);
+            let questions, progressKey;
+
+            // サブカテゴリがある場合
+            if (currentSubcategory && cat.subcategories) {
+                questions = cat.subcategories[currentSubcategory].questions;
+                progressKey = currentCategory + '_' + currentSubcategory;
+            } else {
+                questions = cat.questions;
+                progressKey = currentCategory;
+            }
+
+            const progress = getProgress(currentYear, progressKey);
 
             const startIdx = setIndex * QUESTIONS_PER_SET;
-            const endIdx = Math.min(startIdx + QUESTIONS_PER_SET, cat.questions.length);
-            const setQuestions = cat.questions.slice(startIdx, endIdx);
+            const endIdx = Math.min(startIdx + QUESTIONS_PER_SET, questions.length);
+            const setQuestions = questions.slice(startIdx, endIdx);
 
             // 未正解の問題のみ取得
             currentQuestions = setQuestions.filter(q => !progress.answeredIds.includes(q.id));
@@ -1454,7 +1566,10 @@
                 resultDiv.className = 'result-display correct';
                 document.getElementById('result-icon').textContent = '○';
                 document.getElementById('result-text').textContent = '正解！';
-                saveProgress(currentYear, currentCategory, question.id);
+                // サブカテゴリがある場合はサブカテゴリを含むキーを使用
+                const cat = quizData[currentYear].categories[currentCategory];
+                const progressKey = (currentSubcategory && cat.subcategories) ? currentCategory + '_' + currentSubcategory : currentCategory;
+                saveProgress(currentYear, progressKey, question.id);
                 // 正解した問題はリストから除外
                 currentQuestions.splice(currentIndex, 1);
             } else {
@@ -1494,15 +1609,29 @@
         function showComplete() {
             showScreen('complete-screen');
             const cat = quizData[currentYear].categories[currentCategory];
-            const startNum = currentSetIndex * QUESTIONS_PER_SET + 1;
-            const endNum = Math.min((currentSetIndex + 1) * QUESTIONS_PER_SET, cat.questions.length);
+            let questions, name, progressKey;
 
-            const setProgress = getSetProgress(currentYear, currentCategory, currentSetIndex);
+            // サブカテゴリがある場合
+            if (currentSubcategory && cat.subcategories) {
+                const sub = cat.subcategories[currentSubcategory];
+                questions = sub.questions;
+                name = sub.name;
+                progressKey = currentCategory + '_' + currentSubcategory;
+            } else {
+                questions = cat.questions;
+                name = cat.name;
+                progressKey = currentCategory;
+            }
+
+            const startNum = currentSetIndex * QUESTIONS_PER_SET + 1;
+            const endNum = Math.min((currentSetIndex + 1) * QUESTIONS_PER_SET, questions.length);
+
+            const setProgress = getSetProgress(currentYear, progressKey, currentSetIndex);
             const setTotal = endNum - startNum + 1;
             const percentage = Math.round((setProgress / setTotal) * 100);
 
             document.getElementById('complete-stats').innerHTML = `
-                ${cat.name}<br>
+                ${name}<br>
                 問${startNum}～${endNum}<br>
                 正答率: ${percentage}% (${setProgress}/${setTotal}問)
             `;
@@ -1520,6 +1649,7 @@
         function goHome() {
             currentYear = null;
             currentCategory = null;
+            currentSubcategory = null;
             currentSetIndex = null;
             renderYearList();
             showScreen('home-screen');
@@ -1527,9 +1657,23 @@
 
         function goToCategory() {
             currentCategory = null;
+            currentSubcategory = null;
             currentSetIndex = null;
             renderCategoryList();
             showScreen('category-screen');
+        }
+
+        function goToSubcategory() {
+            // サブカテゴリがある場合はサブカテゴリ画面へ、ない場合はカテゴリ画面へ
+            const cat = quizData[currentYear].categories[currentCategory];
+            if (cat && cat.subcategories) {
+                currentSubcategory = null;
+                currentSetIndex = null;
+                renderSubcategoryList();
+                showScreen('subcategory-screen');
+            } else {
+                goToCategory();
+            }
         }
 
         function goToSet() {
