@@ -1009,8 +1009,12 @@
 
         // 初期化（非同期でCSVを読み込み）
         async function init() {
-            // CSVから問題を読み込み
-            await loadAllQuestions();
+            try {
+                // CSVから問題を読み込み
+                await loadAllQuestions();
+            } catch (error) {
+                console.error('問題の読み込みに失敗しました:', error);
+            }
 
             // ログイン済みユーザーを確認
             const savedUser = localStorage.getItem('currentUser');
