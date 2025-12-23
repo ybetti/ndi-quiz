@@ -785,21 +785,26 @@
             // X線問題CSVファイルを読み込み
             try {
                 const xr2024_04 = await loadQuestionsFromCSV('xr_2024_04.csv');
+                console.log('xr_2024_04 loaded:', xr2024_04.length, '問');
                 if (xr2024_04.length > 0) {
                     quizData["X線"].categories["2024-04"].questions = xr2024_04;
                 }
                 const xr2024_10 = await loadQuestionsFromCSV('xr_2024_10.csv');
+                console.log('xr_2024_10 loaded:', xr2024_10.length, '問');
                 if (xr2024_10.length > 0) {
                     quizData["X線"].categories["2024-10"].questions = xr2024_10;
                 }
                 const xr2025_04 = await loadQuestionsFromCSV('xr_2025_04.csv');
+                console.log('xr_2025_04 loaded:', xr2025_04.length, '問');
                 if (xr2025_04.length > 0) {
                     quizData["X線"].categories["2025-04"].questions = xr2025_04;
                 }
                 const xr2025_10 = await loadQuestionsFromCSV('xr_2025_10.csv');
+                console.log('xr_2025_10 loaded:', xr2025_10.length, '問');
                 if (xr2025_10.length > 0) {
                     quizData["X線"].categories["2025-10"].questions = xr2025_10;
                 }
+                console.log('X線カテゴリ読み込み完了:', quizData["X線"]);
             } catch (e) {
                 console.log('X線CSV読み込みエラー:', e);
             }
