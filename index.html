@@ -796,7 +796,10 @@
                     "2024-04": { name: "2024年4月", questions: [] },
                     "2024-10": { name: "2024年10月", questions: [] },
                     "2025-04": { name: "2025年4月", questions: [] },
-                    "2025-10": { name: "2025年10月", questions: [] }
+                    "2025-10-management": { name: "2025年10月 管理知識", questions: [] },
+                    "2025-10-law": { name: "2025年10月 関係法令", questions: [] },
+                    "2025-10-measurement": { name: "2025年10月 測定知識", questions: [] },
+                    "2025-10-biology": { name: "2025年10月 生体影響", questions: [] }
                 }
             };
 
@@ -817,10 +820,26 @@
                 if (xr2025_04.length > 0) {
                     quizData["X線"].categories["2025-04"].questions = xr2025_04;
                 }
-                const xr2025_10 = await loadQuestionsFromCSV('xr_2025_10.csv');
-                console.log('xr_2025_10 loaded:', xr2025_10.length, '問');
-                if (xr2025_10.length > 0) {
-                    quizData["X線"].categories["2025-10"].questions = xr2025_10;
+                // 2025年10月 カテゴリ別読み込み
+                const xr2025_10_management = await loadQuestionsFromCSV('xr_2025_10_management.csv');
+                console.log('xr_2025_10_management loaded:', xr2025_10_management.length, '問');
+                if (xr2025_10_management.length > 0) {
+                    quizData["X線"].categories["2025-10-management"].questions = xr2025_10_management;
+                }
+                const xr2025_10_law = await loadQuestionsFromCSV('xr_2025_10_law.csv');
+                console.log('xr_2025_10_law loaded:', xr2025_10_law.length, '問');
+                if (xr2025_10_law.length > 0) {
+                    quizData["X線"].categories["2025-10-law"].questions = xr2025_10_law;
+                }
+                const xr2025_10_measurement = await loadQuestionsFromCSV('xr_2025_10_measurement.csv');
+                console.log('xr_2025_10_measurement loaded:', xr2025_10_measurement.length, '問');
+                if (xr2025_10_measurement.length > 0) {
+                    quizData["X線"].categories["2025-10-measurement"].questions = xr2025_10_measurement;
+                }
+                const xr2025_10_biology = await loadQuestionsFromCSV('xr_2025_10_biology.csv');
+                console.log('xr_2025_10_biology loaded:', xr2025_10_biology.length, '問');
+                if (xr2025_10_biology.length > 0) {
+                    quizData["X線"].categories["2025-10-biology"].questions = xr2025_10_biology;
                 }
                 console.log('X線カテゴリ読み込み完了:', quizData["X線"]);
             } catch (e) {
@@ -1193,7 +1212,7 @@
             categoryList.innerHTML = '';
 
             const categories = quizData[currentYear].categories;
-            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10': 'xr' };
+            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10-management': 'xr', '2025-10-law': 'xr', '2025-10-measurement': 'xr', '2025-10-biology': 'xr' };
 
             for (const catKey in categories) {
                 const cat = categories[catKey];
