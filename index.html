@@ -742,11 +742,7 @@
 
         // 全問題を読み込み
         async function loadAllQuestions() {
-            // 2024年度 MT問題
-            const mt2024 = await loadQuestionsFromCSV('mt_questions.csv');
-            quizData["2024"].categories["MT"].questions = mt2024;
-
-            // 2023年度を追加
+            // 2023年度を先に追加
             quizData["2023"] = {
                 name: "2023年度問題",
                 categories: {
@@ -757,9 +753,23 @@
                 }
             };
 
-            // 2023年度 UT問題
+            // 2024年度 MT問題を読み込み
+            const mt2024 = await loadQuestionsFromCSV('mt_questions.csv');
+            if (mt2024.length > 0) {
+                quizData["2024"].categories["MT"].questions = mt2024;
+            } else {
+                // CSVが読み込めない場合はバックアップデータを使用
+                quizData["2024"].categories["MT"].questions = mtQuestions_backup;
+            }
+
+            // 2023年度 UT問題を読み込み
             const ut2023 = await loadQuestionsFromCSV('ut_questions.csv');
-            quizData["2023"].categories["UT"].questions = ut2023;
+            if (ut2023.length > 0) {
+                quizData["2023"].categories["UT"].questions = ut2023;
+            } else {
+                // CSVが読み込めない場合はバックアップデータを使用
+                quizData["2023"].categories["UT"].questions = utQuestions_old;
+            }
         }
 
         // 以下は既存のMT問題データ（CSV読み込みに失敗した場合のフォールバック用・削除予定）
