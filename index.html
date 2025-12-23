@@ -134,10 +134,11 @@
             margin-right: 12px;
         }
 
-        .category-icon.mt { background: #e74c3c; }
+        .category-icon.mt { background: #2ecc71; }
         .category-icon.pt { background: #3498db; }
-        .category-icon.ut { background: #2ecc71; }
+        .category-icon.ut { background: #f1c40f; }
         .category-icon.rt { background: #f39c12; }
+        .category-icon.xr { background: #9b59b6; }
 
         .item-left {
             display: flex;
@@ -769,6 +770,39 @@
             } catch (e) {
                 console.log('CSV読み込みエラー、バックアップデータを使用:', e);
             }
+
+            // X線カテゴリを追加
+            quizData["X線"] = {
+                name: "X線問題",
+                categories: {
+                    "2024-04": { name: "2024年4月", questions: [] },
+                    "2024-10": { name: "2024年10月", questions: [] },
+                    "2025-04": { name: "2025年4月", questions: [] },
+                    "2025-10": { name: "2025年10月", questions: [] }
+                }
+            };
+
+            // X線問題CSVファイルを読み込み
+            try {
+                const xr2024_04 = await loadQuestionsFromCSV('xr_2024_04.csv');
+                if (xr2024_04.length > 0) {
+                    quizData["X線"].categories["2024-04"].questions = xr2024_04;
+                }
+                const xr2024_10 = await loadQuestionsFromCSV('xr_2024_10.csv');
+                if (xr2024_10.length > 0) {
+                    quizData["X線"].categories["2024-10"].questions = xr2024_10;
+                }
+                const xr2025_04 = await loadQuestionsFromCSV('xr_2025_04.csv');
+                if (xr2025_04.length > 0) {
+                    quizData["X線"].categories["2025-04"].questions = xr2025_04;
+                }
+                const xr2025_10 = await loadQuestionsFromCSV('xr_2025_10.csv');
+                if (xr2025_10.length > 0) {
+                    quizData["X線"].categories["2025-10"].questions = xr2025_10;
+                }
+            } catch (e) {
+                console.log('X線CSV読み込みエラー:', e);
+            }
         }
 
         // 以下は既存のMT問題データ（CSV読み込みに失敗した場合のフォールバック用）
@@ -1136,7 +1170,7 @@
             categoryList.innerHTML = '';
 
             const categories = quizData[currentYear].categories;
-            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt' };
+            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10': 'xr' };
 
             for (const catKey in categories) {
                 const cat = categories[catKey];
@@ -1146,12 +1180,14 @@
                 const totalQuestions = cat.questions.length;
                 const percentage = totalQuestions > 0 ? Math.round((progress.correct / totalQuestions) * 100) : 0;
 
+                // X線カテゴリの場合は「XR」を表示、それ以外はカテゴリキーを表示
+                const iconLabel = currentYear === 'X線' ? 'XR' : catKey;
                 const item = document.createElement('div');
                 item.className = 'list-item';
                 item.onclick = () => selectCategory(catKey);
                 item.innerHTML = `
                     <div class="item-left">
-                        <div class="category-icon ${categoryColors[catKey] || ''}">${catKey}</div>
+                        <div class="category-icon ${categoryColors[catKey] || ''}">${iconLabel}</div>
                         <div class="item-info">
                             <div class="item-name">${cat.name}</div>
                             <div class="item-stats">${progress.correct} / ${totalQuestions} 問正解</div>
