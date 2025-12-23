@@ -561,7 +561,6 @@
                 <h2>ログイン</h2>
                 <div class="login-form">
                     <input type="text" id="employee-id" class="login-input" placeholder="社員番号（4桁）" maxlength="4" pattern="[0-9]{4}">
-                    <input type="text" id="employee-name" class="login-input" placeholder="名前">
                     <button class="login-btn" onclick="login()">ログイン</button>
                     <div id="login-error" class="login-error">社員番号は4桁の数字で入力してください</div>
                 </div>
@@ -1005,6 +1004,8 @@
             { id: 129, question: "次の文は、JIS G 0587による超音波探傷試験報告書について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "超音波探傷試験報告書は、事前に受渡当事者間で取り決めた場合には、その内容に従って作成すればよい。", b: "超音波探傷試験報告書には、製造日、試験日、出荷予定日の記載を含む。", c: "鍛鋼品に関する記録には、品番を記載すれば材質、寸法は特に記載しなくともよい。", d: "試験結果の報告項目には、表面粗さ、減衰係数、減衰補正量、きずの位置、きずの分類を含む。" }, answer: "a", explanation: "JIS G 0587では、『11.報告』の一般事項で『鍛鋼品の試験を行った場合、次に示す項目について記録し、報告しなければならない。あらかじめ受渡当事者間で取り決めた場合はその協定による。』とある。" },
             { id: 130, question: "次の文は、JIS Z 2305に基づく超音波探傷試験技術者レベル2の役割の内容について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "使用する特定のNDT方法を指定する。", b: "NDTを実施し、監督する。", c: "規格、コードを解釈する。", d: "NDT手順を作成する。" }, answer: "b", explanation: "レベル2に認証された技術者はNDT手順に従ってNDTを実施する力量を実証している。レベル2技術者は、NDTを実施し、監督することができる。" },
             { id: 131, question: "次の文は、JIS Z 3060による探傷装置の調整及び点検について述べたものである。正しいものを一つ選び、記号で答えよ。", choices: { a: "測定範囲及び探傷感度は作業開始時に調整しなければならないが、入射点及びSTB屈折角は継続して使用している場合は前日の値を使用してもよい。", b: "測定範囲及び探傷感度は作業開始時、作業開始から4時間以内ごと及び作業終了時に点検し確認しなければならない。", c: "再点検時、探傷感度が直前の調整又は確認時より3dB低下している場合は、再調整し直前に調整又は確認した以後に実施した試験を再試験する。", d: "再点検時、探傷感度が直前の調整又は確認時より3dB増加している場合は、再調整し直前に調整又は確認した以後に実施した試験で、きずを検出した部分を再試験する。" }, answer: "b", explanation: "JIS Z 3060の9.1.7探傷装置の測定、調整及び点検では、『入射点、STB屈折角、測定範囲及び探傷感度は、作業開始時に測定及び調整する。また、これらは作業開始後4時間以内ごと及び作業終了時に点検し、これらの条件の変化量を確認する。』とある。" }
+        ];
+
         // アプリケーションの状態
         let currentYear = null;
         let currentCategory = null;
@@ -1040,7 +1041,6 @@
         // ログイン処理
         function login() {
             const employeeId = document.getElementById('employee-id').value.trim();
-            const employeeName = document.getElementById('employee-name').value.trim();
             const errorDiv = document.getElementById('login-error');
 
             // バリデーション
@@ -1049,14 +1049,9 @@
                 errorDiv.style.display = 'block';
                 return;
             }
-            if (!employeeName) {
-                errorDiv.textContent = '名前を入力してください';
-                errorDiv.style.display = 'block';
-                return;
-            }
 
             errorDiv.style.display = 'none';
-            currentUser = { id: employeeId, name: employeeName };
+            currentUser = { id: employeeId };
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             showHomeScreen();
         }
@@ -1066,14 +1061,12 @@
             currentUser = null;
             localStorage.removeItem('currentUser');
             document.getElementById('employee-id').value = '';
-            document.getElementById('employee-name').value = '';
             showScreen('login-screen');
         }
 
         // ホーム画面を表示
         function showHomeScreen() {
-            document.getElementById('display-user-name').textContent =
-                `${currentUser.id} ${currentUser.name}`;
+            document.getElementById('display-user-name').textContent = currentUser.id;
             renderYearList();
             showScreen('home-screen');
         }
