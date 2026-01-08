@@ -75,6 +75,37 @@
             border-color: #667eea;
         }
 
+        /* カテゴリアイテム用スタイル */
+        .category-item {
+            flex-direction: column;
+            gap: 8px;
+            cursor: default;
+        }
+
+        .category-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .category-reset-btn {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            align-self: flex-end;
+            transition: background 0.2s;
+        }
+
+        .category-reset-btn:hover {
+            background: #c82333;
+        }
+
         .item-info {
             display: flex;
             flex-direction: column;
@@ -582,7 +613,6 @@
                         <button class="toggle-btn active" id="order-sequential">順番通り</button>
                         <button class="toggle-btn" id="order-random">ランダム</button>
                     </div>
-                    <button class="reset-btn" onclick="resetAllProgress()">全ての進捗をリセット</button>
                 </div>
             </div>
 
@@ -1350,9 +1380,12 @@
                 // X線カテゴリの場合は「XR」を表示、それ以外はカテゴリキーを表示
                 const iconLabel = currentYear === 'X線' ? 'XR' : catKey;
                 const item = document.createElement('div');
-                item.className = 'list-item';
-                item.onclick = () => selectCategory(catKey);
-                item.innerHTML = `
+                item.className = 'list-item category-item';
+
+                const mainContent = document.createElement('div');
+                mainContent.className = 'category-main';
+                mainContent.onclick = () => selectCategory(catKey);
+                mainContent.innerHTML = `
                     <div class="item-left">
                         <div class="category-icon ${categoryColors[catKey] || ''}">${iconLabel}</div>
                         <div class="item-info">
@@ -1367,7 +1400,35 @@
                         <div class="progress-text">${percentage}%</div>
                     </div>
                 `;
+
+                const resetBtn = document.createElement('button');
+                resetBtn.className = 'category-reset-btn';
+                resetBtn.textContent = 'リセット';
+                resetBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    resetCategoryProgress(catKey, cat.name);
+                };
+
+                item.appendChild(mainContent);
+                item.appendChild(resetBtn);
                 categoryList.appendChild(item);
+            }
+        }
+
+        // カテゴリの進捗をリセット
+        function resetCategoryProgress(catKey, catName) {
+            if (confirm(`「${catName}」の進捗をリセットしますか？`)) {
+                const cat = quizData[currentYear].categories[catKey];
+                if (cat.subcategories) {
+                    // サブカテゴリがある場合は全サブカテゴリの進捗を削除
+                    for (const subKey in cat.subcategories) {
+                        localStorage.removeItem(`quiz_progress_${currentUser.id}_${currentYear}_${catKey}_${subKey}`);
+                    }
+                } else {
+                    localStorage.removeItem(`quiz_progress_${currentUser.id}_${currentYear}_${catKey}`);
+                }
+                renderCategoryList();
+                alert(`「${catName}」の進捗をリセットしました。`);
             }
         }
 
