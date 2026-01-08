@@ -1436,13 +1436,29 @@
         // セット内の進捗を取得
         function getSetProgress(year, category, setIndex) {
             const progress = getProgress(year, category);
-            const cat = quizData[year].categories[category];
+
+            // サブカテゴリ対応：category が "2025-04_management" のような形式の場合
+            let questions;
+            if (category.includes('_')) {
+                const [catKey, subKey] = category.split('_');
+                const cat = quizData[year].categories[catKey];
+                if (cat && cat.subcategories && cat.subcategories[subKey]) {
+                    questions = cat.subcategories[subKey].questions;
+                } else {
+                    return 0;
+                }
+            } else {
+                const cat = quizData[year].categories[category];
+                if (!cat) return 0;
+                questions = cat.questions;
+            }
+
             const startIdx = setIndex * QUESTIONS_PER_SET;
-            const endIdx = Math.min(startIdx + QUESTIONS_PER_SET, cat.questions.length);
+            const endIdx = Math.min(startIdx + QUESTIONS_PER_SET, questions.length);
 
             let correct = 0;
             for (let i = startIdx; i < endIdx; i++) {
-                if (progress.answeredIds.includes(cat.questions[i].id)) {
+                if (questions[i] && progress.answeredIds.includes(questions[i].id)) {
                     correct++;
                 }
             }
