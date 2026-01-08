@@ -1361,8 +1361,8 @@
         // サブカテゴリ選択
         function selectSubcategory(subcategory) {
             currentSubcategory = subcategory;
-            renderSetList();
-            showScreen('set-screen');
+            // サブカテゴリの場合は問題セット選択をスキップして直接クイズ開始
+            startQuiz(0);
         }
 
         // 問題セットリストの描画
@@ -1719,8 +1719,15 @@
 
         function goToSet() {
             currentSetIndex = null;
-            renderSetList();
-            showScreen('set-screen');
+            // サブカテゴリがある場合はサブカテゴリ画面に戻る
+            if (currentSubcategory) {
+                currentSubcategory = null;
+                renderSubcategoryList();
+                showScreen('subcategory-screen');
+            } else {
+                renderSetList();
+                showScreen('set-screen');
+            }
         }
 
         // 全進捗リセット（現在のユーザーのみ）
