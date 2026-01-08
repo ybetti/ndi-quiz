@@ -77,16 +77,15 @@
 
         /* カテゴリアイテム用スタイル */
         .category-item {
-            flex-direction: column;
-            gap: 8px;
             cursor: default;
+            gap: 12px;
         }
 
         .category-main {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
+            flex: 1;
             cursor: pointer;
         }
 
@@ -98,8 +97,8 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            align-self: flex-end;
             transition: background 0.2s;
+            white-space: nowrap;
         }
 
         .category-reset-btn:hover {
