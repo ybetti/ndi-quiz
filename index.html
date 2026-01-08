@@ -1220,9 +1220,21 @@
 
             Object.keys(quizData).forEach(year => {
                 const data = quizData[year];
-                const progress = getYearProgress(year);
-                const totalQuestions = getTotalQuestionsInYear(year);
-                const percentage = totalQuestions > 0 ? Math.round((progress / totalQuestions) * 100) : 0;
+                let statsText, percentage;
+
+                if (year === 'X線') {
+                    // X線の場合は試験回数ベースで表示
+                    const completedExams = getCompletedExamsCount(year);
+                    const totalExams = Object.keys(data.categories).length;
+                    statsText = `${completedExams} / ${totalExams} 回完了`;
+                    percentage = totalExams > 0 ? Math.round((completedExams / totalExams) * 100) : 0;
+                } else {
+                    // 他の年度は問題数ベースで表示
+                    const progress = getYearProgress(year);
+                    const totalQuestions = getTotalQuestionsInYear(year);
+                    statsText = `${progress} / ${totalQuestions} 問正解`;
+                    percentage = totalQuestions > 0 ? Math.round((progress / totalQuestions) * 100) : 0;
+                }
 
                 const item = document.createElement('div');
                 item.className = 'list-item';
@@ -1230,7 +1242,7 @@
                 item.innerHTML = `
                     <div class="item-info">
                         <div class="item-name">${data.name}</div>
-                        <div class="item-stats">${progress} / ${totalQuestions} 問正解</div>
+                        <div class="item-stats">${statsText}</div>
                     </div>
                     <div class="item-right">
                         <div class="progress-bar">
@@ -1241,6 +1253,37 @@
                 `;
                 yearList.appendChild(item);
             });
+        }
+
+        // 完了した試験回数を取得（X線用）
+        function getCompletedExamsCount(year) {
+            let completed = 0;
+            const categories = quizData[year].categories;
+            for (const catKey in categories) {
+                const cat = categories[catKey];
+                if (cat.subcategories) {
+                    // サブカテゴリがある場合、全サブカテゴリが100%完了しているか確認
+                    let allSubcategoriesComplete = true;
+                    for (const subKey in cat.subcategories) {
+                        const sub = cat.subcategories[subKey];
+                        if (sub.questions.length === 0) continue;
+                        const progress = getProgress(year, catKey + '_' + subKey);
+                        if (progress.correct < sub.questions.length) {
+                            allSubcategoriesComplete = false;
+                            break;
+                        }
+                    }
+                    if (allSubcategoriesComplete) completed++;
+                } else {
+                    // サブカテゴリがない場合
+                    if (cat.questions.length === 0) continue;
+                    const progress = getProgress(year, catKey);
+                    if (progress.correct >= cat.questions.length) {
+                        completed++;
+                    }
+                }
+            }
+            return completed;
         }
 
         // 年度内の総問題数を取得
