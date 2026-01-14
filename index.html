@@ -169,6 +169,7 @@
         .category-icon.ut { background: #f1c40f; }
         .category-icon.rt { background: #f39c12; }
         .category-icon.xr { background: #9b59b6; }
+        .category-icon.freq { background: #e74c3c; }
 
         .item-left {
             display: flex;
@@ -964,6 +965,50 @@
             } catch (e) {
                 console.log('X線CSV読み込みエラー:', e);
             }
+
+            // 頻出問題カテゴリを追加
+            quizData["頻出"] = {
+                name: "頻出問題",
+                categories: {
+                    "frequent": {
+                        name: "頻出問題",
+                        questions: [],
+                        subcategories: {
+                            "management": { name: "管理知識", questions: [] },
+                            "law": { name: "関係法令", questions: [] },
+                            "measurement": { name: "測定知識", questions: [] },
+                            "biology": { name: "生体影響", questions: [] }
+                        }
+                    }
+                }
+            };
+
+            // 頻出問題CSVファイルを読み込み
+            try {
+                const freq_management = await loadQuestionsFromCSV('xr_frequent_management.csv');
+                console.log('freq_management loaded:', freq_management.length, '問');
+                if (freq_management.length > 0) {
+                    quizData["頻出"].categories["frequent"].subcategories["management"].questions = freq_management;
+                }
+                const freq_law = await loadQuestionsFromCSV('xr_frequent_law.csv');
+                console.log('freq_law loaded:', freq_law.length, '問');
+                if (freq_law.length > 0) {
+                    quizData["頻出"].categories["frequent"].subcategories["law"].questions = freq_law;
+                }
+                const freq_measurement = await loadQuestionsFromCSV('xr_frequent_measurement.csv');
+                console.log('freq_measurement loaded:', freq_measurement.length, '問');
+                if (freq_measurement.length > 0) {
+                    quizData["頻出"].categories["frequent"].subcategories["measurement"].questions = freq_measurement;
+                }
+                const freq_biology = await loadQuestionsFromCSV('xr_frequent_biology.csv');
+                console.log('freq_biology loaded:', freq_biology.length, '問');
+                if (freq_biology.length > 0) {
+                    quizData["頻出"].categories["frequent"].subcategories["biology"].questions = freq_biology;
+                }
+                console.log('頻出問題カテゴリ読み込み完了:', quizData["頻出"]);
+            } catch (e) {
+                console.log('頻出問題CSV読み込みエラー:', e);
+            }
         }
 
         // 以下は既存のMT問題データ（CSV読み込みに失敗した場合のフォールバック用）
@@ -1375,7 +1420,7 @@
             categoryList.innerHTML = '';
 
             const categories = quizData[currentYear].categories;
-            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10': 'xr', 'management': 'xr', 'law': 'xr', 'measurement': 'xr', 'biology': 'xr' };
+            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10': 'xr', 'frequent': 'freq', 'management': 'xr', 'law': 'xr', 'measurement': 'xr', 'biology': 'xr' };
 
             for (const catKey in categories) {
                 const cat = categories[catKey];
@@ -1401,8 +1446,8 @@
 
                 const percentage = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
 
-                // X線カテゴリの場合は「XR」を表示、それ以外はカテゴリキーを表示
-                const iconLabel = currentYear === 'X線' ? 'XR' : catKey;
+                // X線カテゴリの場合は「XR」、頻出カテゴリの場合は「FQ」を表示、それ以外はカテゴリキーを表示
+                const iconLabel = currentYear === 'X線' ? 'XR' : (currentYear === '頻出' ? 'FQ' : catKey);
                 const item = document.createElement('div');
                 item.className = 'list-item category-item';
 
@@ -1479,7 +1524,9 @@
             const subcategoryList = document.getElementById('subcategory-list');
             subcategoryList.innerHTML = '';
 
-            const categoryColors = { 'management': 'xr', 'law': 'xr', 'measurement': 'xr', 'biology': 'xr' };
+            const isFrequent = currentYear === '頻出';
+            const categoryColors = { 'management': isFrequent ? 'freq' : 'xr', 'law': isFrequent ? 'freq' : 'xr', 'measurement': isFrequent ? 'freq' : 'xr', 'biology': isFrequent ? 'freq' : 'xr' };
+            const iconLabel = isFrequent ? 'FQ' : 'XR';
 
             for (const subKey in cat.subcategories) {
                 const sub = cat.subcategories[subKey];
@@ -1494,7 +1541,7 @@
                 item.onclick = () => selectSubcategory(subKey);
                 item.innerHTML = `
                     <div class="item-left">
-                        <div class="category-icon ${categoryColors[subKey] || 'xr'}">XR</div>
+                        <div class="category-icon ${categoryColors[subKey]}">${iconLabel}</div>
                         <div class="item-info">
                             <div class="item-name">${sub.name}</div>
                             <div class="item-stats">${progress.correct} / ${totalQuestions} 問正解</div>
