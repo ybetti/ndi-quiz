@@ -283,6 +283,22 @@
             margin-bottom: 12px;
         }
 
+        .frequency-badge {
+            display: none;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .frequency-badge.visible {
+            display: inline-block;
+        }
+
         .question-text {
             font-size: 1.1rem;
             line-height: 1.6;
@@ -652,6 +668,7 @@
 
                 <div class="question-area">
                     <div class="question-number" id="question-number"></div>
+                    <div class="frequency-badge" id="frequency-badge"></div>
                     <div class="question-text" id="question-text"></div>
                 </div>
 
@@ -1742,7 +1759,20 @@
                 `残り ${currentQuestions.length - currentIndex} 問`;
             document.getElementById('question-number').textContent =
                 `問題 ${question.id}`;
-            document.getElementById('question-text').textContent = question.question;
+
+            // 出題頻度の表示（頻出問題の場合）
+            const frequencyBadge = document.getElementById('frequency-badge');
+            const frequencyMatch = question.explanation ? question.explanation.match(/【(4回[^】]+)】/) : null;
+            if (frequencyMatch) {
+                frequencyBadge.textContent = frequencyMatch[1];
+                frequencyBadge.classList.add('visible');
+            } else {
+                frequencyBadge.classList.remove('visible');
+            }
+
+            // 問題文から【頻出】を取り除いて表示
+            const questionText = question.question.replace(/^【頻出】/, '');
+            document.getElementById('question-text').textContent = questionText;
 
             // 選択肢の表示
             const choicesDiv = document.getElementById('choices');
