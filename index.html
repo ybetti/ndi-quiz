@@ -1026,6 +1026,29 @@
             } catch (e) {
                 console.log('頻出問題CSV読み込みエラー:', e);
             }
+
+            // PT（浸透探傷試験）カテゴリを追加
+            quizData["PT"] = {
+                name: "PT（浸透探傷試験）",
+                categories: {
+                    "2024-10": {
+                        name: "2024年10月",
+                        questions: []
+                    }
+                }
+            };
+
+            // PT問題CSVファイルを読み込み
+            try {
+                const pt_2024_10 = await loadQuestionsFromCSV('pt_2024_10.csv');
+                console.log('pt_2024_10 loaded:', pt_2024_10.length, '問');
+                if (pt_2024_10.length > 0) {
+                    quizData["PT"].categories["2024-10"].questions = pt_2024_10;
+                }
+                console.log('PTカテゴリ読み込み完了:', quizData["PT"]);
+            } catch (e) {
+                console.log('PT CSV読み込みエラー:', e);
+            }
         }
 
         // 以下は既存のMT問題データ（CSV読み込みに失敗した場合のフォールバック用）
