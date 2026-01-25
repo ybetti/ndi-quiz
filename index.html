@@ -737,7 +737,7 @@
                 const fields = parseCSVLine(line);
                 if (fields.length >= 8) {
                     // 5択対応（9フィールド以上の場合）
-                    if (fields.length >= 9 && fields[6] && fields[6].trim() !== '') {
+                    if (fields.length >= 9) {
                         questions.push({
                             id: parseInt(fields[0]),
                             question: fields[1],
