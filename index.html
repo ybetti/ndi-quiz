@@ -1058,6 +1058,18 @@
             } catch (e) {
                 console.log('PT CSV読み込みエラー:', e);
             }
+
+            // 2024年度 RT（放射線透過試験）問題を読み込み
+            try {
+                const rt_2024_10 = await loadQuestionsFromCSV('rt_2024_10.csv');
+                console.log('rt_2024_10 loaded:', rt_2024_10.length, '問');
+                if (rt_2024_10.length > 0) {
+                    quizData["2024"].categories["RT"].questions = rt_2024_10;
+                }
+                console.log('2024年度RT読み込み完了');
+            } catch (e) {
+                console.log('RT CSV読み込みエラー:', e);
+            }
         }
 
         // 以下は既存のMT問題データ（CSV読み込みに失敗した場合のフォールバック用）
