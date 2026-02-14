@@ -305,6 +305,17 @@
             color: #333;
         }
 
+        .question-image {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .question-image img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
         /* 選択肢 */
         .choices {
             display: grid;
@@ -670,6 +681,9 @@
                     <div class="question-number" id="question-number"></div>
                     <div class="frequency-badge" id="frequency-badge"></div>
                     <div class="question-text" id="question-text"></div>
+                    <div class="question-image" id="question-image" style="display: none;">
+                        <img id="question-image-content" src="" alt="問題画像">
+                    </div>
                 </div>
 
                 <div class="choices" id="choices"></div>
@@ -728,7 +742,11 @@
             const lines = csvText.split('\n');
             const questions = [];
 
-            // ヘッダー行をスキップ
+            // ヘッダー行を解析して5択かどうか判定
+            const headerLine = lines[0] ? lines[0].trim() : '';
+            const isFiveChoice = headerLine.includes('choice_e');
+
+            // データ行を処理
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue;
@@ -736,8 +754,8 @@
                 // CSVをパース（カンマ区切り、クォート対応）
                 const fields = parseCSVLine(line);
                 if (fields.length >= 8) {
-                    // 5択対応（9フィールド以上の場合）
-                    if (fields.length >= 9) {
+                    if (isFiveChoice) {
+                        // 5択の場合: id,question,a,b,c,d,e,answer,explanation[,image]
                         questions.push({
                             id: parseInt(fields[0]),
                             question: fields[1],
@@ -749,10 +767,11 @@
                                 e: fields[6]
                             },
                             answer: fields[7],
-                            explanation: fields[8]
+                            explanation: fields[8],
+                            image: fields[9] ? fields[9].trim() : null
                         });
                     } else {
-                        // 4択の場合
+                        // 4択の場合: id,question,a,b,c,d,answer,explanation[,image]
                         questions.push({
                             id: parseInt(fields[0]),
                             question: fields[1],
@@ -763,7 +782,8 @@
                                 d: fields[5]
                             },
                             answer: fields[6],
-                            explanation: fields[7]
+                            explanation: fields[7],
+                            image: fields[8] ? fields[8].trim() : null
                         });
                     }
                 }
@@ -1785,6 +1805,16 @@
             // 問題文から【頻出】を取り除いて表示
             const questionText = question.question.replace(/^【頻出】/, '');
             document.getElementById('question-text').textContent = questionText;
+
+            // 画像の表示
+            const questionImage = document.getElementById('question-image');
+            const questionImageContent = document.getElementById('question-image-content');
+            if (question.image) {
+                questionImageContent.src = 'questions/images/' + question.image;
+                questionImage.style.display = 'block';
+            } else {
+                questionImage.style.display = 'none';
+            }
 
             // 選択肢の表示
             const choicesDiv = document.getElementById('choices');
