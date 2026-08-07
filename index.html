@@ -170,6 +170,7 @@
         .category-icon.rt { background: #f39c12; }
         .category-icon.xr { background: #9b59b6; }
         .category-icon.freq { background: #e74c3c; }
+        .category-icon.ms { background: #16a085; }
 
         .item-left {
             display: flex;
@@ -1070,6 +1071,35 @@
             } catch (e) {
                 console.log('RT CSV読み込みエラー:', e);
             }
+
+            // 金属材料カテゴリを追加（レベル３基礎試験の材料科学等）
+            quizData["金属材料"] = {
+                name: "金属材料",
+                categories: {
+                    "ch1": { name: "第1章 結晶とすべり", questions: [] },
+                    "ch2": { name: "第2章 状態図", questions: [] },
+                    "ch3": { name: "第3章 熱処理", questions: [] },
+                    "ch4": { name: "第4章 鉄鋼材料", questions: [] },
+                    "ch5": { name: "第5章 非鉄金属及びその合金", questions: [] },
+                    "ch6": { name: "第6章 溶接と溶接欠陥", questions: [] },
+                    "ch7": { name: "第7章 強さと破壊", questions: [] }
+                }
+            };
+
+            // 金属材料の問題CSVファイルを読み込み
+            try {
+                for (let i = 1; i <= 7; i++) {
+                    const catKey = 'ch' + i;
+                    const questions = await loadQuestionsFromCSV(`ms_${catKey}.csv`);
+                    console.log(`ms_${catKey} loaded:`, questions.length, '問');
+                    if (questions.length > 0) {
+                        quizData["金属材料"].categories[catKey].questions = questions;
+                    }
+                }
+                console.log('金属材料カテゴリ読み込み完了:', quizData["金属材料"]);
+            } catch (e) {
+                console.log('金属材料CSV読み込みエラー:', e);
+            }
         }
 
         // 以下は既存のMT問題データ（CSV読み込みに失敗した場合のフォールバック用）
@@ -1481,7 +1511,7 @@
             categoryList.innerHTML = '';
 
             const categories = quizData[currentYear].categories;
-            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10': 'xr', 'frequent': 'freq', 'management': 'xr', 'law': 'xr', 'measurement': 'xr', 'biology': 'xr' };
+            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10': 'xr', 'frequent': 'freq', 'management': 'xr', 'law': 'xr', 'measurement': 'xr', 'biology': 'xr', 'ch1': 'ms', 'ch2': 'ms', 'ch3': 'ms', 'ch4': 'ms', 'ch5': 'ms', 'ch6': 'ms', 'ch7': 'ms' };
 
             for (const catKey in categories) {
                 const cat = categories[catKey];
@@ -1507,8 +1537,17 @@
 
                 const percentage = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
 
-                // X線カテゴリの場合は「XR」、頻出カテゴリの場合は「FQ」を表示、それ以外はカテゴリキーを表示
-                const iconLabel = currentYear === 'X線' ? 'XR' : (currentYear === '頻出' ? 'FQ' : catKey);
+                // X線カテゴリの場合は「XR」、頻出カテゴリの場合は「FQ」、金属材料の場合は章番号を表示、それ以外はカテゴリキーを表示
+                let iconLabel;
+                if (currentYear === 'X線') {
+                    iconLabel = 'XR';
+                } else if (currentYear === '頻出') {
+                    iconLabel = 'FQ';
+                } else if (currentYear === '金属材料') {
+                    iconLabel = catKey.replace('ch', '') + '章';
+                } else {
+                    iconLabel = catKey;
+                }
                 const item = document.createElement('div');
                 item.className = 'list-item category-item';
 
