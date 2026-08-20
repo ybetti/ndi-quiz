@@ -171,6 +171,7 @@
         .category-icon.xr { background: #9b59b6; }
         .category-icon.freq { background: #e74c3c; }
         .category-icon.ms { background: #16a085; }
+        .category-icon.et { background: #34495e; }
 
         .item-left {
             display: flex;
@@ -848,6 +849,16 @@
                 }
             };
 
+            // 2022年度（春期・秋期）を追加
+            const make2022Categories = () => ({
+                "ET": { name: "渦電流探傷試験(ET)", questions: [] },
+                "PT": { name: "浸透探傷試験(PT)", questions: [] },
+                "RT": { name: "放射線透過試験(RT)", questions: [] },
+                "UT": { name: "超音波探傷試験(UT)", questions: [] }
+            });
+            quizData["2022春"] = { name: "2022年春", categories: make2022Categories() };
+            quizData["2022秋"] = { name: "2022年秋", categories: make2022Categories() };
+
             // まずバックアップデータを設定
             quizData["2024"].categories["MT"].questions = mtQuestions_backup;
             quizData["2023"].categories["UT"].questions = utQuestions_old;
@@ -864,6 +875,27 @@
                 }
             } catch (e) {
                 console.log('CSV読み込みエラー、バックアップデータを使用:', e);
+            }
+
+            // 2022年度（春期・秋期）の問題CSVファイルを読み込み
+            try {
+                const terms2022 = [
+                    { yearKey: "2022春", suffix: "2022_04" },
+                    { yearKey: "2022秋", suffix: "2022_10" }
+                ];
+                for (const term of terms2022) {
+                    for (const catKey of ["ET", "PT", "RT", "UT"]) {
+                        const filename = `${catKey.toLowerCase()}_${term.suffix}.csv`;
+                        const questions = await loadQuestionsFromCSV(filename);
+                        console.log(`${filename} loaded:`, questions.length, '問');
+                        if (questions.length > 0) {
+                            quizData[term.yearKey].categories[catKey].questions = questions;
+                        }
+                    }
+                }
+                console.log('2022年度カテゴリ読み込み完了');
+            } catch (e) {
+                console.log('2022年度CSV読み込みエラー:', e);
             }
 
             // X線カテゴリを追加
@@ -1511,7 +1543,7 @@
             categoryList.innerHTML = '';
 
             const categories = quizData[currentYear].categories;
-            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10': 'xr', 'frequent': 'freq', 'management': 'xr', 'law': 'xr', 'measurement': 'xr', 'biology': 'xr', 'ch1': 'ms', 'ch2': 'ms', 'ch3': 'ms', 'ch4': 'ms', 'ch5': 'ms', 'ch6': 'ms', 'ch7': 'ms' };
+            const categoryColors = { MT: 'mt', PT: 'pt', UT: 'ut', RT: 'rt', ET: 'et', '2024-04': 'xr', '2024-10': 'xr', '2025-04': 'xr', '2025-10': 'xr', 'frequent': 'freq', 'management': 'xr', 'law': 'xr', 'measurement': 'xr', 'biology': 'xr', 'ch1': 'ms', 'ch2': 'ms', 'ch3': 'ms', 'ch4': 'ms', 'ch5': 'ms', 'ch6': 'ms', 'ch7': 'ms' };
 
             for (const catKey in categories) {
                 const cat = categories[catKey];
